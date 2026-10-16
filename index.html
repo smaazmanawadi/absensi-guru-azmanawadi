@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aplikasi Absensi Guru - SMA Azmanawadi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+  <style>
+    .status-btn.active-hadir { background-color: #10B981; color: white; border-color: #059669; }
+    .status-btn.active-terlambat { background-color: #F59E0B; color: white; border-color: #D97706; }
+    .status-btn.active-izin { background-color: #3B82F6; color: white; border-color: #2563EB; }
+    .status-btn.active-sakit { background-color: #8B5CF6; color: white; border-color: #7C3AED; }
+    .status-btn.active-alpa { background-color: #EF4444; color: white; border-color: #DC2626; }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans pb-12">
+
+  <!-- Header -->
+  <header class="bg-indigo-900 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-5 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="p-3 bg-indigo-800 rounded-lg">
+          <i class="fa-solid fa-graduation-cap text-3xl text-amber-400"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold tracking-wide">SMA AZMANAWADI</h1>
+          <p class="text-xs text-indigo-200">Sistem Absensi Guru & Staf Harian</p>
+        </div>
+      </div>
+      
+      <!-- Date Picker & Info -->
+      <div class="flex flex-col sm:flex-row items-center gap-3 bg-indigo-950 p-3 rounded-xl border border-indigo-700 shadow-inner">
+        <div class="flex items-center space-x-2">
+          <i class="fa-regular fa-calendar-days text-amber-400 text-lg"></i>
+          <span class="text-xs text-indigo-200 font-medium">Pilih Tanggal:</span>
+        </div>
+        <input type="date" id="attendance-date" onchange="onDateChange()" class="bg-indigo-900 text-white text-sm font-semibold px-3 py-1.5 rounded-lg border border-indigo-600 focus:outline-none focus:border-amber-400 cursor-pointer">
+        <div id="firebase-status" class="text-[10px] text-amber-300 bg-indigo-900/50 px-2.5 py-1 rounded border border-indigo-800">Menghubungkan...</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 mt-6 space-y-6">
+
+    <!-- Navigation Bar -->
+    <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-3">
+      <div class="flex flex-wrap gap-1" id="day-tabs">
+        <button onclick="switchDay('SENIN')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition">Senin</button>
+        <button onclick="switchDay('SELASA')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition">Selasa</button>
+        <button onclick="switchDay('RABU')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition">Rabu</button>
+        <button onclick="switchDay('KAMIS')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition">Kamis</button>
+        <button onclick="switchDay('JUMAT')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition">Jumat</button>
+        <button onclick="switchDay('SABTU')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition">Sabtu</button>
+        <button onclick="switchDay('REKAP')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition">
+          <i class="fa-solid fa-chart-pie mr-1"></i> Rekap
+        </button>
+      </div>
+    </div>
+
+    <!-- Attendance View -->
+    <div id="attendance-section" class="space-y-4">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4">
+        <div>
+          <div class="flex items-center space-x-2">
+            <h2 id="selected-day-title" class="text-xl font-bold text-slate-800">HARI SENIN</h2>
+            <span id="display-formatted-date" class="text-xs bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1 rounded-full border border-indigo-200"></span>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5">Silakan tentukan status kehadiran guru & staf di bawah ini.</p>
+        </div>
+
+        <div class="flex flex-wrap gap-2 text-xs">
+          <span class="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 font-medium border border-emerald-200" id="stat-hadir">Hadir: 0</span>
+          <span class="px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 font-medium border border-amber-200" id="stat-terlambat">Terlambat: 0</span>
+          <span class="px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 font-medium border border-blue-200" id="stat-izin">Izin: 0</span>
+          <span class="px-3 py-1.5 rounded-full bg-purple-50 text-purple-700 font-medium border border-purple-200" id="stat-sakit">Sakit: 0</span>
+          <span class="px-3 py-1.5 rounded-full bg-rose-50 text-rose-700 font-medium border border-rose-200" id="stat-alpa">Alpa: 0</span>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase tracking-wider">
+                <th class="p-4 w-12 text-center">No</th>
+                <th class="p-4">Nama Lengkap</th>
+                <th class="p-4">Jabatan</th>
+                <th class="p-4 text-center">Status Kehadiran</th>
+                <th class="p-4">Keterangan / Catatan</th>
+              </tr>
+            </thead>
+            <tbody id="attendance-body" class="divide-y divide-slate-100 text-sm">
+              <!-- JS Populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rekap View -->
+    <div id="rekap-section" class="space-y-4 hidden">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800">Rekapitulasi Kehadiran</h2>
+          <p class="text-xs text-slate-500">Laporan absensi tanggal <span id="rekap-date-text" class="font-bold text-slate-700"></span></p>
+        </div>
+        <button onclick="downloadCSV()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-2">
+          <i class="fa-solid fa-file-excel"></i>
+          <span>Unduh Laporan (CSV)</span>
+        </button>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase">
+                <th class="p-4 w-12 text-center">No</th>
+                <th class="p-4">Nama Guru/Staf</th>
+                <th class="p-4 text-center">Hadir</th>
+                <th class="p-4 text-center">Terlambat</th>
+                <th class="p-4 text-center">Izin</th>
+                <th class="p-4 text-center">Sakit</th>
+                <th class="p-4 text-center">Alpa</th>
+                <th class="p-4">Keterangan</th>
+              </tr>
+            </thead>
+            <tbody id="rekap-body" class="divide-y divide-slate-100 text-sm">
+              <!-- JS Populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // --- MASUKKAN KONFIGURASI FIREBASE ANDA DI SINI ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyDjqYRLSp5vl_sxAduVDIXV4ZSemvz2KXI",
+      authDomain: "absensi-guru-azmanawadi.firebaseapp.com",
+      databaseURL: "https://absensi-guru-azmanawadi-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "absensi-guru-azmanawadi",
+      storageBucket: "absensi-guru-azmanawadi.firebasestorage.app",
+      messagingSenderId: "338977908224",
+      appId: "1:338977908224:web:aa6387c65716b8ca701ae5"
+    };
+
+    // Inisialisasi Firebase
+    let db = null;
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      document.getElementById('firebase-status').innerText = "Terhubung Online (Firebase)";
+      document.getElementById('firebase-status').className = "text-[10px] text-emerald-300 bg-emerald-950 px-2.5 py-1 rounded border border-emerald-800";
+    } catch (e) {
+      document.getElementById('firebase-status').innerText = "Mode Lokal (Belum Diatur)";
+    }
+
+    const scheduleData = {
+      "SENIN": [
+        { id: "S1", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
+        { id: "S2", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
+        { id: "S3", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
+        { id: "S4", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
+        { id: "S5", name: "SUSILAWATI, S.PD", role: "TU" },
+        { id: "S6", name: "SALIMATUL HUZWATI, S.PD", role: "GURU/BENDAHARA" },
+        { id: "S7", name: "L. KUKUH YPP, S.PD", role: "GURU" },
+        { id: "S8", name: "LISRATUL AENY, S.KOM", role: "GURU" },
+        { id: "S9", name: "MINIAH, S.PD", role: "GURU" }
+      ],
+      "SELASA": [
+        { id: "SL1", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
+        { id: "SL2", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
+        { id: "SL3", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
+        { id: "SL4", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
+        { id: "SL5", name: "SUSILAWATI, S.PD", role: "TU" },
+        { id: "SL6", name: "BUKHORI ABDILLAH, S.PD", role: "GURU/OP" },
+        { id: "SL7", name: "ALPANDI ALANSORI, S.PD", role: "GURU" },
+        { id: "SL8", name: "MINIAH, S.PD", role: "GURU" },
+        { id: "SL9", name: "LISRATUL AENY, S.KOM", role: "GURU" },
+        { id: "SL10", name: "MATHLAUL ANWARI, S.PD", role: "GURU" },
+        { id: "SL11", name: "NURUL HIDAYATI, S.PD", role: "GURU" },
+        { id: "SL12", name: "L. KUKUH YPP, S.PD", role: "GURU" },
+        { id: "SL13", name: "SALIMATUL HUZWATI, S.PD", role: "GURU" }
+      ],
+      "RABU": [
+        { id: "RB1", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
+        { id: "RB2", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
+        { id: "RB3", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
+        { id: "RB4", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
+        { id: "RB5", name: "SUSILAWATI, S.PD", role: "TU" },
+        { id: "RB6", name: "ALPANDI ALANSORI, S.PD", role: "GURU" },
+        { id: "RB7", name: "M. NURUL JIHAD, S.PD", role: "GURU" },
+        { id: "RB8", name: "M. ABDULLAH, S.PD", role: "GURU" },
+        { id: "RB9", name: "BQ. DEWI PUSPITASARI, S.PD", role: "GURU" },
+        { id: "RB10", name: "NURUL HIDAYATI, S.PD", role: "GURU" },
+        { id: "RB11", name: "BUKHORI ABDILLAH, S.PD", role: "GURU/OP" },
+        { id: "RB12", name: "MINIAH, S.PD", role: "GURU" }
+      ],
+      "KAMIS": [
+        { id: "KM1", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
+        { id: "KM2", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
+        { id: "KM3", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
+        { id: "KM4", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
+        { id: "KM5", name: "SUSILAWATI, S.PD", role: "TU" },
+        { id: "KM6", name: "NURUL HIDAYATI, S.PD", role: "GURU" },
+        { id: "KM7", name: "SAMSUL HADI, S.PD.I", role: "GURU" },
+        { id: "KM8", name: "ALPANDI ALANSORI, S.PD", role: "GURU" },
+        { id: "KM9", name: "BQ. DEWI PUSPITASARI, S.PD", role: "GURU" },
+        { id: "KM10", name: "BUKHORI ABDILLAH, S.PD", role: "GURU/OP" },
+        { id: "KM11", name: "M. NURUL JIHAD, S.PD", role: "GURU" },
+        { id: "KM12", name: "MINIAH, S.PD", role: "GURU" }
+      ],
+      "JUMAT": [
+        { id: "JM1", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
+        { id: "JM2", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
+        { id: "JM3", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
+        { id: "JM4", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
+        { id: "JM5", name: "SUSILAWATI, S.PD", role: "TU" },
+        { id: "JM6", name: "L. KUKUH YPP., S.PD", role: "GURU" },
+        { id: "JM7", name: "M. ABDULLAH, S.PD., GR", role: "GURU" },
+        { id: "JM8", name: "M. NURUL JIHAD, S.PD", role: "GURU" },
+        { id: "JM9", name: "BUKHORI ABDILLAH, S.PD", role: "GURU" }
+      ],
+      "SABTU": [
+        { id: "SB1", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
+        { id: "SB2", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
+        { id: "SB3", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
+        { id: "SB4", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
+        { id: "SB5", name: "SUSILAWATI, S.PD", role: "TU" },
+        { id: "SB6", name: "BUKHORI ABDILLAH, S.PD", role: "GURU/OP" },
+        { id: "SB7", name: "MATHLAUL ANWARI, S.PD", role: "GURU" },
+        { id: "SB8", name: "ALPANDI ALANSORI, S.PD", role: "GURU" },
+        { id: "SB9", name: "SALIMATUL HUZWATI, S.PD", role: "GURU/BENDAHARA" }
+      ]
+    };
+
+    let selectedDate = "";
+    let currentDay = "SENIN";
+    let attendanceRecords = {};
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const today = new Date();
+      selectedDate = today.toISOString().split('T')[0];
+      document.getElementById('attendance-date').value = selectedDate;
+
+      if (db) {
+        // Ambil data real-time dari Firebase
+        db.ref('absensi_guru').on('value', (snapshot) => {
+          const serverData = snapshot.val();
+          if (serverData) {
+            attendanceRecords = serverData;
+          }
+          updateDateAndDay(today);
+        });
+      } else {
+        loadFromLocalStorage();
+        updateDateAndDay(today);
+      }
+    });
+
+    function onDateChange() {
+      const dateVal = document.getElementById('attendance-date').value;
+      if (!dateVal) return;
+      selectedDate = dateVal;
+      const dateObj = new Date(dateVal + "T00:00:00");
+      updateDateAndDay(dateObj);
+    }
+
+    function updateDateAndDay(dateObj) {
+      const daysMap = ["SABTU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
+      const dayIndex = dateObj.getDay();
+      currentDay = daysMap[dayIndex] || "SENIN";
+
+      const formatted = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      document.getElementById('display-formatted-date').innerText = formatted;
+      document.getElementById('rekap-date-text').innerText = formatted;
+
+      renderDayTabs();
+      if (currentDay === 'REKAP') {
+        renderRekapTable();
+      } else {
+        document.getElementById('selected-day-title').innerText = `HARI ${currentDay}`;
+        renderAttendanceTable();
+      }
+    }
+
+    function setStatus(personId, status) {
+      if (!attendanceRecords[selectedDate]) attendanceRecords[selectedDate] = {};
+      if (!attendanceRecords[selectedDate][personId]) attendanceRecords[selectedDate][personId] = {};
+
+      attendanceRecords[selectedDate][personId].status = status;
+      saveData();
+      renderAttendanceTable();
+    }
+
+    function setNote(personId, note) {
+      if (!attendanceRecords[selectedDate]) attendanceRecords[selectedDate] = {};
+      if (!attendanceRecords[selectedDate][personId]) attendanceRecords[selectedDate][personId] = {};
+
+      attendanceRecords[selectedDate][personId].note = note;
+      saveData();
+    }
+
+    function renderAttendanceTable() {
+      const tbody = document.getElementById('attendance-body');
+      tbody.innerHTML = '';
+
+      const list = scheduleData[currentDay] || [];
+      let counts = { Hadir: 0, Terlambat: 0, Izin: 0, Sakit: 0, Alpa: 0 };
+
+      const dayData = attendanceRecords[selectedDate] || {};
+
+      list.getBytes = () => {}; // helper safe
+      list.forEach((person, index) => {
+        const record = dayData[person.id] || {};
+        const currentStatus = record.status || 'Hadir';
+        const note = record.note || '';
+
+        if (counts[currentStatus] !== undefined) counts[currentStatus]++;
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 border-b border-slate-100 transition";
+
+        tr.innerHTML = `
+          <td class="p-4 text-center font-medium text-slate-400">${index + 1}</td>
+          <td class="p-4 font-semibold text-slate-800">${person.name}</td>
+          <td class="p-4"><span class="px-2.5 py-1 text-xs rounded-md bg-slate-100 text-slate-600 border border-slate-200 font-medium">${person.role}</span></td>
+          <td class="p-4 text-center">
+            <div class="inline-flex rounded-lg shadow-sm border border-slate-200 bg-slate-50 p-1 space-x-1">
+              <button onclick="setStatus('${person.id}', 'Hadir')" class="status-btn px-3 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Hadir' ? 'active-hadir' : 'bg-white text-slate-600 hover:bg-slate-100'}">Hadir</button>
+              <button onclick="setStatus('${person.id}', 'Terlambat')" class="status-btn px-3 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Terlambat' ? 'active-terlambat' : 'bg-white text-slate-600 hover:bg-slate-100'}">Terlambat</button>
+              <button onclick="setStatus('${person.id}', 'Izin')" class="status-btn px-3 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Izin' ? 'active-izin' : 'bg-white text-slate-600 hover:bg-slate-100'}">Izin</button>
+              <button onclick="setStatus('${person.id}', 'Sakit')" class="status-btn px-3 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Sakit' ? 'active-sakit' : 'bg-white text-slate-600 hover:bg-slate-100'}">Sakit</button>
+              <button onclick="setStatus('${person.id}', 'Alpa')" class="status-btn px-3 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Alpa' ? 'active-alpa' : 'bg-white text-slate-600 hover:bg-slate-100'}">Alpa</button>
+            </div>
+          </td>
+          <td class="p-4">
+            <input type="text" value="${note}" onchange="setNote('${person.id}', this.value)" placeholder="Catatan/Alasan..." class="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 bg-white">
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('stat-hadir').innerText = `Hadir: ${counts.Hadir}`;
+      document.getElementById('stat-terlambat').innerText = `Terlambat: ${counts.Terlambat}`;
+      document.getElementById('stat-izin').innerText = `Izin: ${counts.Izin}`;
+      document.getElementById('stat-sakit').innerText = `Sakit: ${counts.Sakit}`;
+      document.getElementById('stat-alpa').innerText = `Alpa: ${counts.Alpa}`;
+    }
+
+    function renderRekapTable() {
+      const tbody = document.getElementById('rekap-body');
+      tbody.innerHTML = '';
+
+      const list = scheduleData[currentDay] || [];
+      const dayData = attendanceRecords[selectedDate] || {};
+
+      if (list.length === 0 || currentDay === 'REKAP') {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">Silakan pilih hari Senin - Sabtu terlebih dahulu untuk melihat rekap tanggal ini.</td></tr>`;
+        return;
+      }
+
+      list.forEach((person, index) => {
+        const record = dayData[person.id] || {};
+        const st = record.status || 'Hadir';
+        const note = record.note || '-';
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 border-b border-slate-100";
+        tr.innerHTML = `
+          <td class="p-4 text-center text-slate-400">${index + 1}</td>
+          <td class="p-4 font-semibold text-slate-800">${person.name}<br><span class="text-xs font-normal text-slate-500">${person.role}</span></td>
+          <td class="p-4 text-center">${st === 'Hadir' ? '<span class="text-emerald-600 font-bold">✔</span>' : '-'}</td>
+          <td class="p-4 text-center">${st === 'Terlambat' ? '<span class="text-amber-600 font-bold">✔</span>' : '-'}</td>
+          <td class="p-4 text-center">${st === 'Izin' ? '<span class="text-blue-600 font-bold">✔</span>' : '-'}</td>
+          <td class="p-4 text-center">${st === 'Sakit' ? '<span class="text-purple-600 font-bold">✔</span>' : '-'}</td>
+          <td class="p-4 text-center">${st === 'Alpa' ? '<span class="text-rose-600 font-bold">✔</span>' : '-'}</td>
+          <td class="p-4 text-xs text-slate-600">${note}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function switchDay(day) {
+      if (day === 'REKAP') {
+        currentDay = 'REKAP';
+        document.getElementById('attendance-section').classList.add('hidden');
+        document.getElementById('rekap-section').classList.remove('hidden');
+        renderRekapTable();
+      } else {
+        currentDay = day;
+        document.getElementById('attendance-section').classList.remove('hidden');
+        document.getElementById('rekap-section').classList.add('hidden');
+        document.getElementById('selected-day-title').innerText = `HARI ${day}`;
+        renderAttendanceTable();
+      }
+      renderDayTabs();
+    }
+
+    function renderDayTabs() {
+      const container = document.getElementById('day-tabs');
+      const tabs = container.querySelectorAll('.day-tab');
+      tabs.forEach(tab => {
+        const text = tab.innerText.trim().toUpperCase();
+        if ((currentDay === 'REKAP' && text.includes('REKAP')) || text === currentDay) {
+          tab.className = "day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow-sm transition";
+        } else {
+          tab.className = "day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition";
+        }
+      });
+    }
+
+    function saveData() {
+      if (db) {
+        // Simpan online ke Firebase
+        db.ref('absensi_guru').set(attendanceRecords);
+      } else {
+        // Fallback simpan lokal
+        localStorage.setItem('sma_azmanawadi_absensi_date', JSON.stringify(attendanceRecords));
+      }
+    }
+
+    function loadFromLocalStorage() {
+      const data = localStorage.getItem('sma_azmanawadi_absensi_date');
+      if (data) {
+        attendanceRecords = JSON.parse(data);
+      }
+    }
+
+    function downloadCSV() {
+      const list = scheduleData[currentDay] || [];
+      const dayData = attendanceRecords[selectedDate] || {};
+      let csvContent = "data:text/csv;charset=utf-8,No,Nama,Jabatan,Status,Keterangan\n";
+
+      list.forEach((person, index) => {
+        const record = dayData[person.id] || {};
+        const st = record.status || 'Hadir';
+        const note = record.note || '';
+        csvContent += `${index + 1},"${person.name}","${person.role}","${st}","${note}"\n`;
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `Rekap_Absensi_${currentDay}_${selectedDate}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>
