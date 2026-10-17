@@ -96,9 +96,6 @@
           <button onclick="switchDay('KAMIS')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition">Kamis</button>
           <button onclick="switchDay('JUMAT')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition">Jumat</button>
           <button onclick="switchDay('SABTU')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition">Sabtu</button>
-          <button onclick="switchDay('REKAP')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition">
-            <i class="fa-solid fa-chart-pie mr-1"></i> Rekap Harian
-          </button>
           <button onclick="switchDay('REKAP_BULAN')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition">
             <i class="fa-solid fa-calendar-days mr-1"></i> Rekap Per Bulan
           </button>
@@ -139,42 +136,6 @@
                 </tr>
               </thead>
               <tbody id="attendance-body" class="divide-y divide-slate-100 text-sm">
-                <!-- JS Populated -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Rekap Harian View -->
-      <div id="rekap-section" class="space-y-4 hidden">
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4">
-          <div>
-            <h2 class="text-xl font-bold text-slate-800">Rekapitulasi Kehadiran Harian</h2>
-            <p class="text-xs text-slate-500">Laporan absensi tanggal <span id="rekap-date-text" class="font-bold text-slate-700"></span></p>
-          </div>
-          <button onclick="downloadCSV()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-2">
-            <i class="fa-solid fa-file-excel"></i>
-            <span>Unduh Laporan (CSV)</span>
-          </button>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-              <thead>
-                <tr class="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase">
-                  <th class="p-4 w-12 text-center">No</th>
-                  <th class="p-4">Nama Guru/Staf</th>
-                  <th class="p-4 text-center">Hadir</th>
-                  <th class="p-4 text-center">Terlambat</th>
-                  <th class="p-4 text-center">Izin</th>
-                  <th class="p-4 text-center">Sakit</th>
-                  <th class="p-4 text-center">Alpa</th>
-                  <th class="p-4">Keterangan</th>
-                </tr>
-              </thead>
-              <tbody id="rekap-body" class="divide-y divide-slate-100 text-sm">
                 <!-- JS Populated -->
               </tbody>
             </table>
@@ -402,12 +363,9 @@
 
       const formatted = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
       document.getElementById('display-formatted-date').innerText = formatted;
-      document.getElementById('rekap-date-text').innerText = formatted;
 
       renderDayTabs();
-      if (currentDay === 'REKAP') {
-        renderRekapTable();
-      } else if (currentDay === 'REKAP_BULAN') {
+      if (currentDay === 'REKAP_BULAN') {
         renderRekapBulananTable();
       } else {
         document.getElementById('selected-day-title').innerText = `HARI ${currentDay}`;
@@ -477,39 +435,6 @@
       document.getElementById('stat-alpa').innerText = `Alpa: ${counts.Alpa}`;
     }
 
-    function renderRekapTable() {
-      const tbody = document.getElementById('rekap-body');
-      tbody.innerHTML = '';
-
-      const list = scheduleData[currentDay] || [];
-      const dayData = attendanceRecords[selectedDate] || {};
-
-      if (list.length === 0 || currentDay === 'REKAP' || currentDay === 'REKAP_BULAN') {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">Silakan pilih hari Senin - Sabtu terlebih dahulu untuk melihat rekap tanggal ini.</td></tr>`;
-        return;
-      }
-
-      list.forEach((person, index) => {
-        const record = dayData[person.id] || {};
-        const st = record.status || 'Hadir';
-        const note = record.note || '-';
-
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50 border-b border-slate-100";
-        tr.innerHTML = `
-          <td class="p-4 text-center text-slate-400">${index + 1}</td>
-          <td class="p-4 font-semibold text-slate-800">${person.name}<br><span class="text-xs font-normal text-slate-500">${person.role}</span></td>
-          <td class="p-4 text-center">${st === 'Hadir' ? '<span class="text-emerald-600 font-bold">✔</span>' : '-'}</td>
-          <td class="p-4 text-center">${st === 'Terlambat' ? '<span class="text-amber-600 font-bold">✔</span>' : '-'}</td>
-          <td class="p-4 text-center">${st === 'Izin' ? '<span class="text-blue-600 font-bold">✔</span>' : '-'}</td>
-          <td class="p-4 text-center">${st === 'Sakit' ? '<span class="text-purple-600 font-bold">✔</span>' : '-'}</td>
-          <td class="p-4 text-center">${st === 'Alpa' ? '<span class="text-rose-600 font-bold">✔</span>' : '-'}</td>
-          <td class="p-4 text-xs text-slate-600">${note}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
     // Normalisasi nama guru untuk menyatukan titel yang berbeda (misal: S.Pd dengan S.Pd., Gr)
     function normalizeName(name) {
       if (!name) return "";
@@ -529,14 +454,14 @@
       const bulanVal = document.getElementById('select-bulan').value; // Format "YYYY-MM"
       document.getElementById('print-info-rekap-bulan').innerText = bulanVal ? `Bulan: ${bulanVal}` : '-';
 
-      // Kumpulkan master daftar guru unik dari seluruh jadwal (menggunakan normalisasi agar satu orang)
+      // 1. Kumpulkan daftar guru unik dari seluruh jadwal
       let uniqueTeachersMap = {};
       Object.keys(scheduleData).forEach(day => {
         scheduleData[day].forEach(person => {
           const normKey = normalizeName(person.name);
           if (!uniqueTeachersMap[normKey]) {
             uniqueTeachersMap[normKey] = {
-              name: person.name, // Pertahankan nama asli yang rapi
+              name: person.name,
               role: person.role,
               hadir: 0,
               terlambat: 0,
@@ -548,12 +473,12 @@
         });
       });
 
-      // Akumulasikan data dari attendanceRecords berdasarkan bulan yang dipilih
+      // 2. Akumulasikan data dari attendanceRecords berdasarkan bulan yang dipilih
       if (attendanceRecords && bulanVal) {
         Object.keys(attendanceRecords).forEach(tgl => {
+          // Pastikan string tanggal diawali dengan format YYYY-MM
           if (tgl.startsWith(bulanVal)) {
             const dayRecords = attendanceRecords[tgl];
-            // Petakan ID guru ke jadwal hari tersebut untuk mencocokkan nama
             const dayOfWeekMap = ["SABTU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
             const dObj = new Date(tgl + "T00:00:00");
             const dayName = dayOfWeekMap[dObj.getDay()] || "SENIN";
@@ -561,7 +486,7 @@
 
             daySchedule.forEach(person => {
               const record = dayRecords[person.id] || {};
-              const st = record.status || 'Hadir'; // Default hadir jika tidak diabsen
+              const st = record.status || 'Hadir'; // Default Hadir jika tidak diubah
               const normKey = normalizeName(person.name);
 
               if (uniqueTeachersMap[normKey]) {
@@ -601,22 +526,14 @@
     function switchDay(day) {
       currentDay = day;
       const attSec = document.getElementById('attendance-section');
-      const repSec = document.getElementById('rekap-section');
       const repBulanSec = document.getElementById('rekap-bulan-section');
 
-      if (day === 'REKAP') {
+      if (day === 'REKAP_BULAN') {
         attSec.classList.add('hidden');
-        repSec.classList.remove('hidden');
-        repBulanSec.classList.add('hidden');
-        renderRekapTable();
-      } else if (day === 'REKAP_BULAN') {
-        attSec.classList.add('hidden');
-        repSec.classList.add('hidden');
         repBulanSec.classList.remove('hidden');
         renderRekapBulananTable();
       } else {
         attSec.classList.remove('hidden');
-        repSec.classList.add('hidden');
         repBulanSec.classList.add('hidden');
         document.getElementById('selected-day-title').innerText = `HARI ${day}`;
         renderAttendanceTable();
@@ -629,8 +546,7 @@
       const tabs = container.querySelectorAll('.day-tab');
       tabs.forEach(tab => {
         const text = tab.innerText.trim().toUpperCase();
-        if ((currentDay === 'REKAP' && text.includes('REKAP HARIAN')) || 
-            (currentDay === 'REKAP_BULAN' && text.includes('REKAP PER BULAN')) || 
+        if ((currentDay === 'REKAP_BULAN' && text.includes('REKAP PER BULAN')) || 
             text === currentDay) {
           tab.className = "day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow-sm transition";
         } else {
@@ -652,27 +568,6 @@
       if (data) {
         attendanceRecords = JSON.parse(data);
       }
-    }
-
-    function downloadCSV() {
-      const list = scheduleData[currentDay] || [];
-      const dayData = attendanceRecords[selectedDate] || {};
-      let csvContent = "data:text/csv;charset=utf-8,No,Nama,Jabatan,Status,Keterangan\n";
-
-      list.forEach((person, index) => {
-        const record = dayData[person.id] || {};
-        const st = record.status || 'Hadir';
-        const note = record.note || '';
-        csvContent += `${index + 1},"${person.name}","${person.role}","${st}","${note}"\n`;
-      });
-
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `Rekap_Absensi_${currentDay}_${selectedDate}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
     }
 
     function downloadMonthlyCSV() {
