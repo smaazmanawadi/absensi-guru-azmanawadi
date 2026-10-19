@@ -104,7 +104,7 @@
         <div class="flex flex-wrap items-center gap-3 bg-indigo-950 p-3 rounded-xl border border-indigo-700 shadow-inner">
           <div class="flex items-center space-x-2">
             <i class="fa-regular fa-calendar-days text-amber-400 text-lg"></i>
-            <span class="text-xs text-indigo-200 font-medium">Tanggal:</span>
+            <span class="text-xs text-indigo-200 font-medium">Tanggal Pilih:</span>
           </div>
           <input type="date" id="attendance-date" onchange="onDateChange()" class="bg-indigo-900 text-white text-sm font-semibold px-3 py-1.5 rounded-lg border border-indigo-600 focus:outline-none focus:border-amber-400 cursor-pointer">
           <div id="firebase-status" class="text-[10px] text-amber-300 bg-indigo-900/50 px-2.5 py-1 rounded border border-indigo-800">Menghubungkan...</div>
@@ -118,9 +118,10 @@
 
     <main class="max-w-7xl mx-auto px-4 mt-6 space-y-6">
 
-      <!-- Navigation Bar (Hanya untuk Kepsek) -->
-      <div id="kepsek-nav" class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-3 no-print">
-        <div class="flex flex-wrap gap-1" id="day-tabs">
+      <!-- Navigation Bar (Untuk Kepsek & Guru) -->
+      <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-3 no-print">
+        <!-- Kepsek Navigation -->
+        <div class="flex flex-wrap gap-1 hidden" id="kepsek-nav">
           <button onclick="switchDay('SENIN')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition">Senin</button>
           <button onclick="switchDay('SELASA')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition">Selasa</button>
           <button onclick="switchDay('RABU')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition">Rabu</button>
@@ -132,6 +133,18 @@
           </button>
           <button onclick="switchDay('MANAGE_ACCOUNTS')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition">
             <i class="fa-solid fa-users-gear mr-1"></i> Kelola Akun Guru
+          </button>
+        </div>
+
+        <!-- Guru Navigation -->
+        <div class="flex flex-wrap gap-2 hidden" id="guru-nav">
+          <button id="guru-tab-today" onclick="switchGuruView('TODAY')" class="px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition flex items-center space-x-1">
+            <i class="fa-solid fa-calendar-check mr-1"></i>
+            <span>Absen Hari Ini</span>
+          </button>
+          <button id="guru-tab-history" onclick="switchGuruView('HISTORY')" class="px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition flex items-center space-x-1">
+            <i class="fa-solid fa-clock-rotate-left mr-1"></i>
+            <span>Cek Riwayat Absensi Saya</span>
           </button>
         </div>
       </div>
@@ -147,7 +160,23 @@
             <p class="text-xs text-slate-500 mt-0.5" id="attendance-subtitle">Silakan tentukan status kehadiran guru & staf di bawah ini.</p>
           </div>
 
-          <div id="stats-container" class="flex flex-wrap gap-2 text-xs">
+          <!-- Opsional Search & Filter tambahan -->
+          <div class="flex flex-wrap items-center gap-2 text-xs w-full md:w-auto">
+            <div class="relative flex-grow md:flex-grow-0">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+              <input type="text" id="search-attendance" onkeyup="renderAttendanceTable()" placeholder="Cari nama guru..." class="pl-8 pr-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:border-indigo-600 w-full md:w-44">
+            </div>
+            <select id="filter-status-attendance" onchange="renderAttendanceTable()" class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white font-medium focus:outline-none focus:border-indigo-600">
+              <option value="ALL">Semua Status</option>
+              <option value="Hadir">Hadir</option>
+              <option value="Terlambat">Terlambat</option>
+              <option value="Izin">Izin</option>
+              <option value="Sakit">Sakit</option>
+              <option value="Alpa">Alpa</option>
+            </select>
+          </div>
+
+          <div id="stats-container" class="flex flex-wrap gap-2 text-xs w-full">
             <span class="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 font-medium border border-emerald-200" id="stat-hadir">Hadir: 0</span>
             <span class="px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 font-medium border border-amber-200" id="stat-terlambat">Terlambat: 0</span>
             <span class="px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 font-medium border border-blue-200" id="stat-izin">Izin: 0</span>
@@ -200,6 +229,58 @@
         </div>
       </div>
 
+      <!-- Riwayat Absensi Saya (Khusus Guru / Staf) -->
+      <div id="guru-history-section" class="space-y-4 hidden">
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800">Riwayat Absensi Kehadiran Saya</h2>
+            <p class="text-xs text-slate-500">Lihat tanggal dan hari apa saja Anda telah melakukan absensi.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <div>
+              <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-1">Dari Tanggal</label>
+              <input type="date" id="guru-history-start" onchange="renderGuruHistoryTable()" class="px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 font-semibold bg-slate-50">
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-1">Sampai Tanggal</label>
+              <input type="date" id="guru-history-end" onchange="renderGuruHistoryTable()" class="px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 font-semibold bg-slate-50">
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-1">Status</label>
+              <select id="guru-history-status" onchange="renderGuruHistoryTable()" class="px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 font-semibold bg-slate-50">
+                <option value="ALL">Semua Status</option>
+                <option value="Hadir">Hadir</option>
+                <option value="Terlambat">Terlambat</option>
+                <option value="Izin">Izin</option>
+                <option value="Sakit">Sakit</option>
+                <option value="Alpa">Alpa</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table Histori Saya -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase tracking-wider">
+                  <th class="p-4 w-12 text-center">No</th>
+                  <th class="p-4">Tanggal</th>
+                  <th class="p-4">Hari</th>
+                  <th class="p-4 text-center">Status</th>
+                  <th class="p-4 text-center">Jam Absen</th>
+                  <th class="p-4">Catatan / Alasan</th>
+                </tr>
+              </thead>
+              <tbody id="guru-history-body" class="divide-y divide-slate-100 text-sm">
+                <!-- JS Populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- Rekap Bulanan View -->
       <div id="rekap-bulan-section" class="space-y-4 hidden">
         <div class="hidden print-only mb-6 text-center border-b pb-4">
@@ -244,6 +325,7 @@
                   <th class="p-4 text-center text-blue-600">Izin</th>
                   <th class="p-4 text-center text-purple-600">Sakit</th>
                   <th class="p-4 text-center text-rose-600">Alpa</th>
+                  <th class="p-4 text-center">Riwayat</th>
                 </tr>
               </thead>
               <tbody id="rekap-bulan-body" class="divide-y divide-slate-100 text-sm">
@@ -356,7 +438,6 @@
     document.addEventListener("DOMContentLoaded", () => {
       loadAccountsFromStorage();
       
-      // Tambahkan event listener untuk tombol Enter pada form login
       const loginUserEl = document.getElementById('login-user');
       const loginPassEl = document.getElementById('login-pass');
       
@@ -437,8 +518,7 @@
         { id: "dewi", role: "GURU" },
         { id: "nurul", role: "GURU" },
         { id: "bukhori", role: "GURU/OP" },
-        { id: "miniah", role: "GURU" },
-        { id: "kukuh", role: "GURU" }
+        { id: "miniah", role: "GURU" }
       ],
       "KAMIS": [
         { id: "kepsek", role: "KEPSEK" },
@@ -452,8 +532,7 @@
         { id: "dewi", role: "GURU" },
         { id: "bukhori", role: "GURU/OP" },
         { id: "jihad", role: "GURU" },
-        { id: "miniah", role: "GURU" },
-        { id: "kukuh", role: "GURU" }
+        { id: "miniah", role: "GURU" }
       ],
       "JUMAT": [
         { id: "kepsek", role: "KEPSEK" },
@@ -475,8 +554,7 @@
         { id: "bukhori", role: "GURU/OP" },
         { id: "anwari", role: "GURU" },
         { id: "pandi", role: "GURU" },
-        { id: "salwa", role: "GURU/BENDAHARA" },
-        { id: "kukuh", role: "GURU" }
+        { id: "salwa", role: "GURU/BENDAHARA" }
       ]
     };
 
@@ -490,12 +568,20 @@
       document.getElementById('attendance-date').value = selectedDate;
       document.getElementById('select-bulan').value = selectedDate.slice(0, 7);
 
+      // Default tanggal awal & akhir untuk histori guru
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+      document.getElementById('guru-history-start').value = firstDay;
+      document.getElementById('guru-history-end').value = selectedDate;
+
       if (currentUser.role !== 'KEPSEK') {
         document.getElementById('kepsek-nav').classList.add('hidden');
+        document.getElementById('guru-nav').classList.remove('hidden');
         document.getElementById('header-subtitle').innerText = `Portal Absensi Mandiri - ${accounts[currentUser.username] ? accounts[currentUser.username].name : currentUser.name}`;
         document.getElementById('attendance-subtitle').innerText = "Silakan catat kehadiran Anda hari ini.";
         document.getElementById('stats-container').classList.add('hidden');
       } else {
+        document.getElementById('kepsek-nav').classList.remove('hidden');
+        document.getElementById('guru-nav').classList.add('hidden');
         document.getElementById('manage-schedule-container').classList.remove('hidden');
         populateTeacherSelectDropdown();
       }
@@ -505,6 +591,7 @@
           const serverData = snapshot.val();
           if (serverData) attendanceRecords = serverData;
           updateDateAndDay(today);
+          if (currentUser.role !== 'KEPSEK') renderGuruHistoryTable();
         });
         db.ref('accounts_config').on('value', (snapshot) => {
           const serverAcc = snapshot.val();
@@ -520,6 +607,27 @@
       } else {
         loadFromLocalStorage();
         updateDateAndDay(today);
+        if (currentUser.role !== 'KEPSEK') renderGuruHistoryTable();
+      }
+    }
+
+    function switchGuruView(view) {
+      const attSec = document.getElementById('attendance-section');
+      const histSec = document.getElementById('guru-history-section');
+      const btnToday = document.getElementById('guru-tab-today');
+      const btnHist = document.getElementById('guru-tab-history');
+
+      if (view === 'TODAY') {
+        attSec.classList.remove('hidden');
+        histSec.classList.add('hidden');
+        btnToday.className = "px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition flex items-center space-x-1";
+        btnHist.className = "px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition flex items-center space-x-1";
+      } else {
+        attSec.classList.add('hidden');
+        histSec.classList.remove('hidden');
+        btnHist.className = "px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition flex items-center space-x-1";
+        btnToday.className = "px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition flex items-center space-x-1";
+        renderGuruHistoryTable();
       }
     }
 
@@ -677,6 +785,9 @@
       const tbody = document.getElementById('attendance-body');
       tbody.innerHTML = '';
 
+      const searchVal = (document.getElementById('search-attendance').value || '').toLowerCase();
+      const filterStatus = document.getElementById('filter-status-attendance').value || 'ALL';
+
       const manageScheduleEl = document.getElementById('manage-schedule-container');
       if (currentUser.role === 'KEPSEK') {
         if (currentDay === "MINGGU" || currentDay === "REKAP_BULAN" || currentDay === "MANAGE_ACCOUNTS") {
@@ -701,15 +812,32 @@
       let counts = { Hadir: 0, Terlambat: 0, Izin: 0, Sakit: 0, Alpa: 0 };
       const dayData = attendanceRecords[selectedDate] || {};
 
-      list.forEach((person, index) => {
+      let filteredList = list.filter(person => {
+        const accInfo = accounts[person.id] || { name: 'Tidak Dikenal', role: person.role };
+        const record = dayData[person.id] || {};
+        const currentStatus = record.status || '';
+        const effectiveStatus = currentStatus === '' ? 'Alpa' : currentStatus;
+
+        // Stat counter untuk seluruh data hari ini
+        if (counts[effectiveStatus] !== undefined) counts[effectiveStatus]++;
+
+        // Filtering pencarian nama/role & status
+        const matchSearch = accInfo.name.toLowerCase().includes(searchVal) || accInfo.role.toLowerCase().includes(searchVal);
+        const matchStatus = filterStatus === 'ALL' || effectiveStatus === filterStatus;
+
+        return matchSearch && matchStatus;
+      });
+
+      if (filteredList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 font-medium">Tidak ada data guru yang sesuai dengan kriteria filter.</td></tr>`;
+      }
+
+      filteredList.forEach((person, index) => {
         const accInfo = accounts[person.id] || { name: 'Tidak Dikenal', role: person.role };
         const record = dayData[person.id] || {};
         const currentStatus = record.status || ''; 
         const absenTime = record.time || '-';
         const note = record.note || '';
-
-        const effectiveStatus = currentStatus === '' ? 'Alpa' : currentStatus;
-        if (counts[effectiveStatus] !== undefined) counts[effectiveStatus]++;
 
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 border-b border-slate-100 transition";
@@ -759,6 +887,71 @@
         document.getElementById('stat-sakit').innerText = `Sakit: ${counts.Sakit}`;
         document.getElementById('stat-alpa').innerText = `Alpa: ${counts.Alpa}`;
       }
+    }
+
+    function renderGuruHistoryTable() {
+      if (!currentUser) return;
+      const tbody = document.getElementById('guru-history-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const startDate = document.getElementById('guru-history-start').value;
+      const endDate = document.getElementById('guru-history-end').value;
+      const filterStatus = document.getElementById('guru-history-status').value;
+
+      const dayOfWeekMap = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
+      let historyItems = [];
+
+      Object.keys(attendanceRecords).sort().reverse().forEach(tgl => {
+        if (startDate && tgl < startDate) return;
+        if (endDate && tgl > endDate) return;
+
+        const record = attendanceRecords[tgl][currentUser.username];
+        if (record && record.status) {
+          if (filterStatus !== 'ALL' && record.status !== filterStatus) return;
+
+          const dObj = new Date(tgl + "T00:00:00");
+          const dayName = dayOfWeekMap[dObj.getDay()] || "SENIN";
+          const formattedDate = dObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+          historyItems.push({
+            date: tgl,
+            formattedDate: formattedDate,
+            dayName: dayName,
+            status: record.status,
+            time: record.time || '-',
+            note: record.note || '-'
+          });
+        }
+      });
+
+      if (historyItems.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 font-medium">Tidak ada riwayat absensi pada rentang tanggal tersebut.</td></tr>`;
+        return;
+      }
+
+      historyItems.forEach((item, index) => {
+        let badgeClass = "bg-slate-100 text-slate-700 border-slate-200";
+        if (item.status === 'Hadir') badgeClass = "bg-emerald-100 text-emerald-800 border-emerald-300";
+        else if (item.status === 'Terlambat') badgeClass = "bg-amber-100 text-amber-800 border-amber-300";
+        else if (item.status === 'Izin') badgeClass = "bg-blue-100 text-blue-800 border-blue-300";
+        else if (item.status === 'Sakit') badgeClass = "bg-purple-100 text-purple-800 border-purple-300";
+        else if (item.status === 'Alpa') badgeClass = "bg-rose-100 text-rose-800 border-rose-300";
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 border-b border-slate-100 transition";
+        tr.innerHTML = `
+          <td class="p-4 text-center font-medium text-slate-400">${index + 1}</td>
+          <td class="p-4 font-semibold text-slate-800">${item.formattedDate}</td>
+          <td class="p-4 font-medium text-indigo-900">${item.dayName}</td>
+          <td class="p-4 text-center">
+            <span class="px-3 py-1 text-xs font-bold rounded-full border ${badgeClass}">${item.status}</span>
+          </td>
+          <td class="p-4 text-center font-mono text-xs font-bold text-indigo-600">${item.time}</td>
+          <td class="p-4 text-xs text-slate-600">${item.note}</td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
     let globalTeacherMapForDetail = {};
@@ -832,7 +1025,7 @@
 
       const teachersList = Object.values(uniqueTeachersMap);
       if (teachersList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Tidak ada data rekap pada bulan ini.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">Tidak ada data rekap pada bulan ini.</td></tr>`;
         return;
       }
 
@@ -847,9 +1040,62 @@
           <td class="p-4 text-center font-bold text-blue-600 cursor-pointer hover:underline" onclick="openDetailModal('${teacher.username}', 'Izin')">${teacher.izin}</td>
           <td class="p-4 text-center font-bold text-purple-600 cursor-pointer hover:underline" onclick="openDetailModal('${teacher.username}', 'Sakit')">${teacher.sakit}</td>
           <td class="p-4 text-center font-bold text-rose-600 cursor-pointer hover:underline" onclick="openDetailModal('${teacher.username}', 'Alpa')">${teacher.alpa}</td>
+          <td class="p-4 text-center">
+            <button onclick="openFullTeacherHistory('${teacher.username}')" title="Cek Riwayat Lengkap" class="px-2.5 py-1 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-lg border border-indigo-200 transition">
+              <i class="fa-solid fa-list-check mr-1"></i> Rincian
+            </button>
+          </td>
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    function openFullTeacherHistory(username) {
+      if (currentUser.role !== 'KEPSEK') return;
+      const teacher = globalTeacherMapForDetail[username];
+      if (!teacher) return;
+
+      document.getElementById('detail-modal-title').innerText = `Riwayat Absensi Guru: ${teacher.name}`;
+      document.getElementById('detail-modal-subtitle').innerText = `Semua catatan kehadiran bulan (${bulanSelectedText()})`;
+
+      const tbody = document.getElementById('detail-modal-body');
+      tbody.innerHTML = '';
+
+      let allRecords = [];
+      Object.keys(teacher.recordsDetail).forEach(stKey => {
+        teacher.recordsDetail[stKey].forEach(item => {
+          allRecords.push({ ...item, status: stKey });
+        });
+      });
+
+      allRecords.sort((a, b) => b.date.localeCompare(a.date));
+
+      if (allRecords.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">Belum ada riwayat pada bulan ini.</td></tr>`;
+      } else {
+        allRecords.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.className = "border-b border-slate-100 hover:bg-slate-50";
+          tr.innerHTML = `
+            <td class="p-3 font-semibold text-slate-700">${item.formattedDate}</td>
+            <td class="p-3 text-slate-500">${item.dayName}</td>
+            <td class="p-3 font-bold text-indigo-600">${item.status}</td>
+            <td class="p-3 text-center space-x-1">
+              <select onchange="changeStatusFromModal('${item.date}', '${item.personId}', this.value)" class="px-2 py-1 text-xs border rounded bg-white font-medium text-slate-700 focus:outline-none">
+                <option value="">Ubah Status...</option>
+                <option value="Hadir">Hadir</option>
+                <option value="Terlambat">Terlambat</option>
+                <option value="Izin">Izin</option>
+                <option value="Sakit">Sakit</option>
+                <option value="Alpa">Alpa</option>
+              </select>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      document.getElementById('detail-modal').classList.remove('hidden');
     }
 
     function openDetailModal(username, statusType) {
@@ -1038,7 +1284,7 @@
 
     function renderDayTabs() {
       if (currentUser.role !== 'KEPSEK') return;
-      const container = document.getElementById('day-tabs');
+      const container = document.getElementById('kepsek-nav');
       const tabs = container.querySelectorAll('.day-tab');
       tabs.forEach(tab => {
         const text = tab.innerText.trim().toUpperCase();
