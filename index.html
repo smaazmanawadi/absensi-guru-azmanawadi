@@ -33,8 +33,8 @@
         <div class="inline-flex p-3 bg-indigo-50 text-indigo-900 rounded-xl">
           <i class="fa-solid fa-lock text-3xl"></i>
         </div>
-        <h2 class="text-2xl font-bold text-slate-900">Login Administrator</h2>
-        <p class="text-xs text-slate-500">Silakan masukkan username dan password untuk mengakses absensi SMA Azmanawadi.</p>
+        <h2 class="text-2xl font-bold text-slate-900">Login Aplikasi Absensi</h2>
+        <p class="text-xs text-slate-500">Silakan masukkan username dan password Anda untuk masuk.</p>
       </div>
 
       <div class="space-y-4">
@@ -54,6 +54,37 @@
     </div>
   </div>
 
+  <!-- Modal Detail Tanggal Kehadiran (Khusus Kepsek) -->
+  <div id="detail-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-4 border border-slate-200">
+      <div class="flex justify-between items-center border-b pb-3">
+        <div>
+          <h3 id="detail-modal-title" class="text-lg font-bold text-slate-900">Rincian Tanggal Kehadiran</h3>
+          <p id="detail-modal-subtitle" class="text-xs text-slate-500">-</p>
+        </div>
+        <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600 text-lg p-2"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="max-h-80 overflow-y-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-50 border-b text-slate-500 uppercase">
+              <th class="p-3">Tanggal</th>
+              <th class="p-3">Hari</th>
+              <th class="p-3">Status Saat Ini</th>
+              <th class="p-3 text-center">Aksi / Ubah Status</th>
+            </tr>
+          </thead>
+          <tbody id="detail-modal-body" class="divide-y divide-slate-100">
+            <!-- Populated JS -->
+          </tbody>
+        </table>
+      </div>
+      <div class="text-right pt-2">
+        <button onclick="closeDetailModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold rounded-lg transition">Tutup</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Main App Wrapper (Hidden before login) -->
   <div id="app-content" class="hidden">
     <!-- Header -->
@@ -65,7 +96,7 @@
           </div>
           <div>
             <h1 class="text-2xl font-bold tracking-wide">SMA AZMANAWADI</h1>
-            <p class="text-xs text-indigo-200">Sistem Absensi Guru & Staf Harian</p>
+            <p class="text-xs text-indigo-200" id="header-subtitle">Sistem Absensi Guru & Staf Harian[cite: 1]</p>
           </div>
         </div>
         
@@ -87,8 +118,8 @@
 
     <main class="max-w-7xl mx-auto px-4 mt-6 space-y-6">
 
-      <!-- Navigation Bar -->
-      <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-3 no-print">
+      <!-- Navigation Bar (Hanya untuk Kepsek) -->
+      <div id="kepsek-nav" class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-3 no-print">
         <div class="flex flex-wrap gap-1" id="day-tabs">
           <button onclick="switchDay('SENIN')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition">Senin</button>
           <button onclick="switchDay('SELASA')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition">Selasa</button>
@@ -98,6 +129,9 @@
           <button onclick="switchDay('SABTU')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition">Sabtu</button>
           <button onclick="switchDay('REKAP_BULAN')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition">
             <i class="fa-solid fa-calendar-days mr-1"></i> Rekap Per Bulan
+          </button>
+          <button onclick="switchDay('MANAGE_ACCOUNTS')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition">
+            <i class="fa-solid fa-users-gear mr-1"></i> Kelola Akun Guru
           </button>
         </div>
       </div>
@@ -110,10 +144,10 @@
               <h2 id="selected-day-title" class="text-xl font-bold text-slate-800">HARI SENIN</h2>
               <span id="display-formatted-date" class="text-xs bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1 rounded-full border border-indigo-200"></span>
             </div>
-            <p class="text-xs text-slate-500 mt-0.5">Silakan tentukan status kehadiran guru & staf di bawah ini.</p>
+            <p class="text-xs text-slate-500 mt-0.5" id="attendance-subtitle">Silakan tentukan status kehadiran guru & staf di bawah ini[cite: 1].</p>
           </div>
 
-          <div class="flex flex-wrap gap-2 text-xs">
+          <div id="stats-container" class="flex flex-wrap gap-2 text-xs">
             <span class="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 font-medium border border-emerald-200" id="stat-hadir">Hadir: 0</span>
             <span class="px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 font-medium border border-amber-200" id="stat-terlambat">Terlambat: 0</span>
             <span class="px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 font-medium border border-blue-200" id="stat-izin">Izin: 0</span>
@@ -132,6 +166,7 @@
                   <th class="p-4">Nama Lengkap</th>
                   <th class="p-4">Jabatan</th>
                   <th class="p-4 text-center">Status Kehadiran</th>
+                  <th class="p-4 text-center">Waktu Catat</th>
                   <th class="p-4">Keterangan / Catatan</th>
                 </tr>
               </thead>
@@ -153,13 +188,17 @@
         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4 no-print">
           <div>
             <h2 class="text-xl font-bold text-slate-800">Rekapitulasi Kehadiran Per Bulan</h2>
-            <p class="text-xs text-slate-500">Akumulasi absensi seluruh guru dan staf berdasarkan bulan.</p>
+            <p class="text-xs text-slate-500">Klik angka pada tabel untuk melihat rincian tanggal, mengedit, atau mereset status[cite: 1].</p>
           </div>
           <div class="flex flex-wrap items-center gap-3">
             <div>
               <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-1">Pilih Bulan</label>
               <input type="month" id="select-bulan" onchange="renderRekapBulananTable()" class="px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 font-semibold bg-slate-50">
             </div>
+            <button onclick="resetMonthlyAttendance()" class="mt-4 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-2">
+              <i class="fa-solid fa-rotate-left"></i>
+              <span>Reset Semua Status Bulan Ini</span>
+            </button>
             <button onclick="downloadMonthlyCSV()" class="mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-2">
               <i class="fa-solid fa-file-excel"></i>
               <span>Unduh Rekap Bulan (CSV)</span>
@@ -193,16 +232,93 @@
         </div>
       </div>
 
+      <!-- Manage Accounts View (Khusus Kepsek) -->
+      <div id="manage-accounts-section" class="space-y-6 hidden">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+          <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-user-plus mr-2 text-indigo-600"></i>Tambah Akun Guru / Staf Baru</h2>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Username Login</label>
+              <input type="text" id="new-acc-user" placeholder="cth: budi" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nama Lengkap & Gelar</label>
+              <input type="text" id="new-acc-name" placeholder="cth: BUDI SANTOSO, S.PD" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Password</label>
+              <input type="text" id="new-acc-pass" placeholder="Password akun..." class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Peran (Role)</label>
+              <input type="text" id="new-acc-role" value="GURU" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 font-semibold">
+            </div>
+          </div>
+          <button onclick="addNewAccount()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
+            <i class="fa-solid fa-plus mr-1"></i> Simpan Akun Baru
+          </button>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+          <h2 class="text-xl font-bold text-slate-800">Daftar Akun & Kata Sandi</h2>
+          <p class="text-xs text-slate-500">Anda dapat mengubah sandi atau menghapus akun guru dari sistem.</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase">
+                  <th class="p-4 w-12 text-center">No</th>
+                  <th class="p-4">Username</th>
+                  <th class="p-4">Nama Lengkap</th>
+                  <th class="p-4">Peran (Role)</th>
+                  <th class="p-4">Password Baru</th>
+                  <th class="p-4 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="accounts-table-body" class="divide-y divide-slate-100 text-sm">
+                <!-- JS Populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </main>
   </div>
 
   <script>
-    // Sistem Login Sederhana
+    // Daftar Tepat 17 Akun Guru & Staf Master
+    let accounts = {
+      'kepsek': { pass: 'Belza2021', role: 'KEPSEK', name: 'M. IDRIK RAHMAN, MA' },
+      'mursidin': { pass: '123456', role: 'WAKASIS', name: 'MURSIDIN, S.PD., GR' },
+      'awaludin': { pass: '123456', role: 'WAKAKURMAS', name: 'AWALUDIN, S.PD., GR' },
+      'rosi': { pass: '123456', role: 'WAKASARPRAS', name: 'L. YULIZARROSI, S.PD., GR' },
+      'susilawati': { pass: '123456', role: 'TU', name: 'SUSILAWATI, S.PD' },
+      'salwa': { pass: '123456', role: 'GURU/BENDAHARA', name: 'SALIMATUL HUZWATI, S.PD' },
+      'lilis': { pass: '123456', role: 'GURU', name: 'LISRATUL AENY, S.KOM' },
+      'miniah': { pass: '123456', role: 'GURU', name: 'MINIAH, S.PD' },
+      'bukhori': { pass: '123456', role: 'GURU/OP', name: 'BUKHORI ABDILLAH, S.PD' },
+      'pandi': { pass: '123456', role: 'GURU', name: 'ALPANDI ALANSORI, S.PD' },
+      'anwari': { pass: '123456', role: 'GURU', name: 'MATHLAUL ANWARI, S.PD' },
+      'nurul': { pass: '123456', role: 'GURU', name: 'NURUL HIDAYATI, S.PD' },
+      'jihad': { pass: '123456', role: 'GURU', name: 'M. NURUL JIHAD, S.PD' },
+      'abdullah': { pass: '123456', role: 'GURU', name: 'M. ABDULLAH, S.PD' },
+      'dewi': { pass: '123456', role: 'GURU', name: 'BQ. DEWI PUSPITASARI, S.PD' },
+      'samsul': { pass: '123456', role: 'GURU', name: 'SAMSUL HADI, S.PD.I' },
+      'staf_tambahan': { pass: '123456', role: 'STAF', name: 'STAF ADMINISTRASI' }
+    };
+
+    let currentUser = null;
+
     function processLogin() {
-      const u = document.getElementById('login-user').value.trim();
+      const u = document.getElementById('login-user').value.trim().toLowerCase();
       const p = document.getElementById('login-pass').value.trim();
-      if (u === 'kepsek' && p === 'Belza2021') {
-        sessionStorage.setItem('isLoggedIn', 'true');
+      
+      if (accounts[u] && accounts[u].pass === p) {
+        currentUser = { username: u, ...accounts[u] };
+        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
         document.getElementById('login-modal').classList.add('hidden');
         document.getElementById('app-content').classList.remove('hidden');
         initApp();
@@ -212,19 +328,21 @@
     }
 
     function processLogout() {
-      sessionStorage.removeItem('isLoggedIn');
+      sessionStorage.removeItem('currentUser');
       location.reload();
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      if (sessionStorage.getItem('isLoggedIn') === 'true') {
+      loadAccountsFromStorage();
+      const savedUser = sessionStorage.getItem('currentUser');
+      if (savedUser) {
+        currentUser = JSON.parse(savedUser);
         document.getElementById('login-modal').classList.add('hidden');
         document.getElementById('app-content').classList.remove('hidden');
         initApp();
       }
     });
 
-    // --- KONFIGURASI FIREBASE ---
     const firebaseConfig = {
       apiKey: "AIzaSyDjqYRLSp5vl_sxAduVDIXV4ZSemvz2KXI",
       authDomain: "absensi-guru-azmanawadi.firebaseapp.com",
@@ -247,80 +365,77 @@
 
     const scheduleData = {
       "SENIN": [
-        { id: "S1", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
-        { id: "S2", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
-        { id: "S3", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
-        { id: "S4", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
-        { id: "S5", name: "SUSILAWATI, S.PD", role: "TU" },
-        { id: "S6", name: "SALIMATUL HUZWATI, S.PD", role: "GURU/BENDAHARA" },
-        { id: "S7", name: "L. KUKUH YPP, S.PD", role: "GURU" },
-        { id: "S8", name: "LISRATUL AENY, S.KOM", role: "GURU" },
-        { id: "S9", name: "MINIAH, S.PD", role: "GURU" }
+        { id: "kepsek", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
+        { id: "mursidin", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
+        { id: "rosi", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
+        { id: "awaludin", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
+        { id: "susilawati", name: "SUSILAWATI, S.PD", role: "TU" },
+        { id: "salwa", name: "SALIMATUL HUZWATI, S.PD", role: "GURU/BENDAHARA" },
+        { id: "lilis", name: "LISRATUL AENY, S.KOM", role: "GURU" },
+        { id: "miniah", name: "MINIAH, S.PD", role: "GURU" }
       ],
       "SELASA": [
-        { id: "SL1", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
-        { id: "SL2", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
-        { id: "SL3", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
-        { id: "SL4", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
-        { id: "SL5", name: "SUSILAWATI, S.PD", role: "TU" },
-        { id: "SL6", name: "BUKHORI ABDILLAH, S.PD", role: "GURU/OP" },
-        { id: "SL7", name: "ALPANDI ALANSORI, S.PD", role: "GURU" },
-        { id: "SL8", name: "MINIAH, S.PD", role: "GURU" },
-        { id: "SL9", name: "LISRATUL AENY, S.KOM", role: "GURU" },
-        { id: "SL10", name: "MATHLAUL ANWARI, S.PD", role: "GURU" },
-        { id: "SL11", name: "NURUL HIDAYATI, S.PD", role: "GURU" },
-        { id: "SL12", name: "L. KUKUH YPP, S.PD", role: "GURU" },
-        { id: "SL13", name: "SALIMATUL HUZWATI, S.PD", role: "GURU" }
+        { id: "kepsek", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
+        { id: "mursidin", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
+        { id: "rosi", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
+        { id: "awaludin", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
+        { id: "susilawati", name: "SUSILAWATI, S.PD", role: "TU" },
+        { id: "bukhori", name: "BUKHORI ABDILLAH, S.PD", role: "GURU/OP" },
+        { id: "pandi", name: "ALPANDI ALANSORI, S.PD", role: "GURU" },
+        { id: "miniah", name: "MINIAH, S.PD", role: "GURU" },
+        { id: "lilis", name: "LISRATUL AENY, S.KOM", role: "GURU" },
+        { id: "anwari", name: "MATHLAUL ANWARI, S.PD", role: "GURU" },
+        { id: "nurul", name: "NURUL HIDAYATI, S.PD", role: "GURU" },
+        { id: "salwa", name: "SALIMATUL HUZWATI, S.PD", role: "GURU" }
       ],
       "RABU": [
-        { id: "RB1", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
-        { id: "RB2", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
-        { id: "RB3", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
-        { id: "RB4", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
-        { id: "RB5", name: "SUSILAWATI, S.PD", role: "TU" },
-        { id: "RB6", name: "ALPANDI ALANSORI, S.PD", role: "GURU" },
-        { id: "RB7", name: "M. NURUL JIHAD, S.PD", role: "GURU" },
-        { id: "RB8", name: "M. ABDULLAH, S.PD", role: "GURU" },
-        { id: "RB9", name: "BQ. DEWI PUSPITASARI, S.PD", role: "GURU" },
-        { id: "RB10", name: "NURUL HIDAYATI, S.PD", role: "GURU" },
-        { id: "RB11", name: "BUKHORI ABDILLAH, S.PD", role: "GURU/OP" },
-        { id: "RB12", name: "MINIAH, S.PD", role: "GURU" }
+        { id: "kepsek", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
+        { id: "mursidin", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
+        { id: "rosi", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
+        { id: "awaludin", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
+        { id: "susilawati", name: "SUSILAWATI, S.PD", role: "TU" },
+        { id: "pandi", name: "ALPANDI ALANSORI, S.PD", role: "GURU" },
+        { id: "jihad", name: "M. NURUL JIHAD, S.PD", role: "GURU" },
+        { id: "abdullah", name: "M. ABDULLAH, S.PD", role: "GURU" },
+        { id: "dewi", name: "BQ. DEWI PUSPITASARI, S.PD", role: "GURU" },
+        { id: "nurul", name: "NURUL HIDAYATI, S.PD", role: "GURU" },
+        { id: "bukhori", name: "BUKHORI ABDILLAH, S.PD", role: "GURU/OP" },
+        { id: "miniah", name: "MINIAH, S.PD", role: "GURU" }
       ],
       "KAMIS": [
-        { id: "KM1", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
-        { id: "KM2", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
-        { id: "KM3", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
-        { id: "KM4", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
-        { id: "KM5", name: "SUSILAWATI, S.PD", role: "TU" },
-        { id: "KM6", name: "NURUL HIDAYATI, S.PD", role: "GURU" },
-        { id: "KM7", name: "SAMSUL HADI, S.PD.I", role: "GURU" },
-        { id: "KM8", name: "ALPANDI ALANSORI, S.PD", role: "GURU" },
-        { id: "KM9", name: "BQ. DEWI PUSPITASARI, S.PD", role: "GURU" },
-        { id: "KM10", name: "BUKHORI ABDILLAH, S.PD", role: "GURU/OP" },
-        { id: "KM11", name: "M. NURUL JIHAD, S.PD", role: "GURU" },
-        { id: "KM12", name: "MINIAH, S.PD", role: "GURU" }
+        { id: "kepsek", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
+        { id: "mursidin", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
+        { id: "rosi", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
+        { id: "awaludin", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
+        { id: "susilawati", name: "SUSILAWATI, S.PD", role: "TU" },
+        { id: "nurul", name: "NURUL HIDAYATI, S.PD", role: "GURU" },
+        { id: "samsul", name: "SAMSUL HADI, S.PD.I", role: "GURU" },
+        { id: "pandi", name: "ALPANDI ALANSORI, S.PD", role: "GURU" },
+        { id: "dewi", name: "BQ. DEWI PUSPITASARI, S.PD", role: "GURU" },
+        { id: "bukhori", name: "BUKHORI ABDILLAH, S.PD", role: "GURU/OP" },
+        { id: "jihad", name: "M. NURUL JIHAD, S.PD", role: "GURU" },
+        { id: "miniah", name: "MINIAH, S.PD", role: "GURU" }
       ],
       "JUMAT": [
-        { id: "JM1", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
-        { id: "JM2", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
-        { id: "JM3", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
-        { id: "JM4", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
-        { id: "JM5", name: "SUSILAWATI, S.PD", role: "TU" },
-        { id: "JM6", name: "L. KUKUH YPP., S.PD", role: "GURU" },
-        { id: "JM7", name: "M. ABDULLAH, S.PD., GR", role: "GURU" },
-        { id: "JM8", name: "M. NURUL JIHAD, S.PD", role: "GURU" },
-        { id: "JM9", name: "BUKHORI ABDILLAH, S.PD", role: "GURU" }
+        { id: "kepsek", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
+        { id: "mursidin", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
+        { id: "rosi", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
+        { id: "awaludin", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
+        { id: "susilawati", name: "SUSILAWATI, S.PD", role: "TU" },
+        { id: "abdullah", name: "M. ABDULLAH, S.PD., GR", role: "GURU" },
+        { id: "jihad", name: "M. NURUL JIHAD, S.PD", role: "GURU" },
+        { id: "bukhori", name: "BUKHORI ABDILLAH, S.PD", role: "GURU" }
       ],
       "SABTU": [
-        { id: "SB1", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
-        { id: "SB2", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
-        { id: "SB3", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
-        { id: "SB4", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
-        { id: "SB5", name: "SUSILAWATI, S.PD", role: "TU" },
-        { id: "SB6", name: "BUKHORI ABDILLAH, S.PD", role: "GURU/OP" },
-        { id: "SB7", name: "MATHLAUL ANWARI, S.PD", role: "GURU" },
-        { id: "SB8", name: "ALPANDI ALANSORI, S.PD", role: "GURU" },
-        { id: "SB9", name: "SALIMATUL HUZWATI, S.PD", role: "GURU/BENDAHARA" }
+        { id: "kepsek", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
+        { id: "mursidin", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
+        { id: "rosi", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
+        { id: "awaludin", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
+        { id: "susilawati", name: "SUSILAWATI, S.PD", role: "TU" },
+        { id: "bukhori", name: "BUKHORI ABDILLAH, S.PD", role: "GURU/OP" },
+        { id: "anwari", name: "MATHLAUL ANWARI, S.PD", role: "GURU" },
+        { id: "pandi", name: "ALPANDI ALANSORI, S.PD", role: "GURU" },
+        { id: "salwa", name: "SALIMATUL HUZWATI, S.PD", role: "GURU/BENDAHARA" }
       ]
     };
 
@@ -334,6 +449,13 @@
       document.getElementById('attendance-date').value = selectedDate;
       document.getElementById('select-bulan').value = selectedDate.slice(0, 7);
 
+      if (currentUser.role === 'GURU') {
+        document.getElementById('kepsek-nav').classList.add('hidden');
+        document.getElementById('header-subtitle').innerText = `Portal Absensi Mandiri - ${currentUser.name}`;
+        document.getElementById('attendance-subtitle').innerText = "Silakan catat kehadiran Anda hari ini.";
+        document.getElementById('stats-container').classList.add('hidden');
+      }
+
       if (db) {
         db.ref('absensi_guru').on('value', (snapshot) => {
           const serverData = snapshot.val();
@@ -341,6 +463,12 @@
             attendanceRecords = serverData;
           }
           updateDateAndDay(today);
+        });
+        db.ref('accounts_config').on('value', (snapshot) => {
+          const serverAcc = snapshot.val();
+          if (serverAcc) {
+            accounts = serverAcc;
+          }
         });
       } else {
         loadFromLocalStorage();
@@ -357,18 +485,27 @@
     }
 
     function updateDateAndDay(dateObj) {
-      const daysMap = ["SABTU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
+      const daysMap = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
       const dayIndex = dateObj.getDay();
       currentDay = daysMap[dayIndex] || "SENIN";
 
       const formatted = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
       document.getElementById('display-formatted-date').innerText = formatted;
 
-      renderDayTabs();
-      if (currentDay === 'REKAP_BULAN') {
-        renderRekapBulananTable();
+      if (currentDay === "MINGGU") {
+        document.getElementById('selected-day-title').innerText = `HARI MINGGU (LIBUR)`;
       } else {
         document.getElementById('selected-day-title').innerText = `HARI ${currentDay}`;
+      }
+
+      if (currentUser.role === 'KEPSEK') {
+        renderDayTabs();
+        if (currentDay === 'REKAP_BULAN') {
+          renderRekapBulananTable();
+        } else if (currentDay !== 'MANAGE_ACCOUNTS') {
+          renderAttendanceTable();
+        }
+      } else {
         renderAttendanceTable();
       }
     }
@@ -377,9 +514,51 @@
       if (!attendanceRecords[selectedDate]) attendanceRecords[selectedDate] = {};
       if (!attendanceRecords[selectedDate][personId]) attendanceRecords[selectedDate][personId] = {};
 
-      attendanceRecords[selectedDate][personId].status = status;
+      const currentStatus = attendanceRecords[selectedDate][personId].status;
+
+      if (currentStatus === status && currentUser.role === 'KEPSEK') {
+        attendanceRecords[selectedDate][personId].status = '';
+        attendanceRecords[selectedDate][personId].time = '-';
+      } else {
+        const currentTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        attendanceRecords[selectedDate][personId].status = status;
+        attendanceRecords[selectedDate][personId].time = currentTime;
+      }
+      
       saveData();
       renderAttendanceTable();
+    }
+
+    function resetAttendance(personId) {
+      if (currentUser.role !== 'KEPSEK') return;
+      if (!attendanceRecords[selectedDate]) attendanceRecords[selectedDate] = {};
+      if (!attendanceRecords[selectedDate][personId]) attendanceRecords[selectedDate][personId] = {};
+
+      attendanceRecords[selectedDate][personId].status = '';
+      attendanceRecords[selectedDate][personId].time = '-';
+      saveData();
+      renderAttendanceTable();
+    }
+
+    // Fungsi Reset Seluruh Status Absensi di Bulan yang Dipilih (Khusus Kepsek)
+    function resetMonthlyAttendance() {
+      if (currentUser.role !== 'KEPSEK') return;
+      const bulanVal = document.getElementById('select-bulan').value;
+      if (!bulanVal) {
+        alert("Silakan pilih bulan terlebih dahulu!");
+        return;
+      }
+
+      if (confirm(`Apakah Anda yakin ingin mereset seluruh status absensi pada bulan ${bulanVal}? Semua data kehadiran akan dikosongkan.`)) {
+        Object.keys(attendanceRecords).forEach(tgl => {
+          if (tgl.startsWith(bulanVal)) {
+            delete attendanceRecords[tgl];
+          }
+        });
+        saveData();
+        renderRekapBulananTable();
+        alert("Semua data absensi pada bulan tersebut berhasil direset!");
+      }
     }
 
     function setNote(personId, note) {
@@ -394,19 +573,57 @@
       const tbody = document.getElementById('attendance-body');
       tbody.innerHTML = '';
 
-      const list = scheduleData[currentDay] || [];
+      if (currentDay === "MINGGU") {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400 font-medium">Hari Minggu adalah hari libur. Tidak ada absensi.</td></tr>`;
+        return;
+      }
+
+      let list = [];
+      if (currentUser.role === 'KEPSEK') {
+        list = scheduleData[currentDay] || [];
+      } else {
+        const dayList = scheduleData[currentDay] || [];
+        const found = dayList.find(p => p.id === currentUser.username || normalizeName(p.name) === normalizeName(currentUser.name));
+        if (found) {
+          list = [found];
+        } else {
+          list = [{ id: currentUser.username, name: currentUser.name, role: currentUser.role }];
+        }
+      }
+
       let counts = { Hadir: 0, Terlambat: 0, Izin: 0, Sakit: 0, Alpa: 0 };
       const dayData = attendanceRecords[selectedDate] || {};
 
       list.forEach((person, index) => {
         const record = dayData[person.id] || {};
-        const currentStatus = record.status || 'Hadir';
+        const currentStatus = record.status || ''; 
+        const absenTime = record.time || '-';
         const note = record.note || '';
 
-        if (counts[currentStatus] !== undefined) counts[currentStatus]++;
+        const effectiveStatus = currentStatus === '' ? 'Alpa' : currentStatus;
+        if (counts[effectiveStatus] !== undefined) counts[effectiveStatus]++;
 
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 border-b border-slate-100 transition";
+
+        let statusButtonsHTML = '';
+        if (currentUser.role === 'GURU') {
+          statusButtonsHTML = `
+            <button onclick="setStatus('${person.id}', 'Hadir')" class="status-btn px-3 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Hadir' ? 'active-hadir' : 'bg-white text-slate-600 hover:bg-slate-100'}">Hadir</button>
+            <button onclick="setStatus('${person.id}', 'Izin')" class="status-btn px-3 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Izin' ? 'active-izin' : 'bg-white text-slate-600 hover:bg-slate-100'}">Izin</button>
+            <button onclick="setStatus('${person.id}', 'Sakit')" class="status-btn px-3 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Sakit' ? 'active-sakit' : 'bg-white text-slate-600 hover:bg-slate-100'}">Sakit</button>
+            <button onclick="setStatus('${person.id}', 'Alpa')" class="status-btn px-3 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Alpa' ? 'active-alpa' : 'bg-white text-slate-600 hover:bg-slate-100'}">Alpa</button>
+          `;
+        } else {
+          statusButtonsHTML = `
+            <button onclick="setStatus('${person.id}', 'Hadir')" class="status-btn px-2.5 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Hadir' ? 'active-hadir' : 'bg-white text-slate-600 hover:bg-slate-100'}">Hadir</button>
+            <button onclick="setStatus('${person.id}', 'Terlambat')" class="status-btn px-2.5 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Terlambat' ? 'active-terlambat' : 'bg-white text-slate-600 hover:bg-slate-100'}">Terlambat</button>
+            <button onclick="setStatus('${person.id}', 'Izin')" class="status-btn px-2.5 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Izin' ? 'active-izin' : 'bg-white text-slate-600 hover:bg-slate-100'}">Izin</button>
+            <button onclick="setStatus('${person.id}', 'Sakit')" class="status-btn px-2.5 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Sakit' ? 'active-sakit' : 'bg-white text-slate-600 hover:bg-slate-100'}">Sakit</button>
+            <button onclick="setStatus('${person.id}', 'Alpa')" class="status-btn px-2.5 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Alpa' ? 'active-alpa' : 'bg-white text-slate-600 hover:bg-slate-100'}">Alpa</button>
+            <button onclick="resetAttendance('${person.id}')" title="Reset Status ke Netral" class="px-2.5 py-1.5 text-xs font-semibold rounded-md border bg-slate-200 hover:bg-slate-300 text-slate-700 transition"><i class="fa-solid fa-rotate-left"></i></button>
+          `;
+        }
 
         tr.innerHTML = `
           <td class="p-4 text-center font-medium text-slate-400">${index + 1}</td>
@@ -414,13 +631,10 @@
           <td class="p-4"><span class="px-2.5 py-1 text-xs rounded-md bg-slate-100 text-slate-600 border border-slate-200 font-medium">${person.role}</span></td>
           <td class="p-4 text-center">
             <div class="inline-flex rounded-lg shadow-sm border border-slate-200 bg-slate-50 p-1 space-x-1">
-              <button onclick="setStatus('${person.id}', 'Hadir')" class="status-btn px-3 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Hadir' ? 'active-hadir' : 'bg-white text-slate-600 hover:bg-slate-100'}">Hadir</button>
-              <button onclick="setStatus('${person.id}', 'Terlambat')" class="status-btn px-3 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Terlambat' ? 'active-terlambat' : 'bg-white text-slate-600 hover:bg-slate-100'}">Terlambat</button>
-              <button onclick="setStatus('${person.id}', 'Izin')" class="status-btn px-3 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Izin' ? 'active-izin' : 'bg-white text-slate-600 hover:bg-slate-100'}">Izin</button>
-              <button onclick="setStatus('${person.id}', 'Sakit')" class="status-btn px-3 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Sakit' ? 'active-sakit' : 'bg-white text-slate-600 hover:bg-slate-100'}">Sakit</button>
-              <button onclick="setStatus('${person.id}', 'Alpa')" class="status-btn px-3 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Alpa' ? 'active-alpa' : 'bg-white text-slate-600 hover:bg-slate-100'}">Alpa</button>
+              ${statusButtonsHTML}
             </div>
           </td>
+          <td class="p-4 text-center font-mono text-xs font-bold text-indigo-600">${absenTime}</td>
           <td class="p-4">
             <input type="text" value="${note}" onchange="setNote('${person.id}', this.value)" placeholder="Catatan/Alasan..." class="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 bg-white">
           </td>
@@ -428,14 +642,15 @@
         tbody.appendChild(tr);
       });
 
-      document.getElementById('stat-hadir').innerText = `Hadir: ${counts.Hadir}`;
-      document.getElementById('stat-terlambat').innerText = `Terlambat: ${counts.Terlambat}`;
-      document.getElementById('stat-izin').innerText = `Izin: ${counts.Izin}`;
-      document.getElementById('stat-sakit').innerText = `Sakit: ${counts.Sakit}`;
-      document.getElementById('stat-alpa').innerText = `Alpa: ${counts.Alpa}`;
+      if (currentUser.role === 'KEPSEK') {
+        document.getElementById('stat-hadir').innerText = `Hadir: ${counts.Hadir}`;
+        document.getElementById('stat-terlambat').innerText = `Terlambat: ${counts.Terlambat}`;
+        document.getElementById('stat-izin').innerText = `Izin: ${counts.Izin}`;
+        document.getElementById('stat-sakit').innerText = `Sakit: ${counts.Sakit}`;
+        document.getElementById('stat-alpa').innerText = `Alpa: ${counts.Alpa}`;
+      }
     }
 
-    // Normalisasi nama guru untuk menyatukan titel yang berbeda (misal: S.Pd dengan S.Pd., Gr)
     function normalizeName(name) {
       if (!name) return "";
       return name
@@ -447,59 +662,73 @@
         .trim();
     }
 
+    let globalTeacherMapForDetail = {};
+
     function renderRekapBulananTable() {
       const tbody = document.getElementById('rekap-bulan-body');
       tbody.innerHTML = '';
 
-      const bulanVal = document.getElementById('select-bulan').value; // Format "YYYY-MM"
+      const bulanVal = document.getElementById('select-bulan').value;
       document.getElementById('print-info-rekap-bulan').innerText = bulanVal ? `Bulan: ${bulanVal}` : '-';
 
-      // 1. Kumpulkan daftar guru unik dari seluruh jadwal
       let uniqueTeachersMap = {};
-      Object.keys(scheduleData).forEach(day => {
-        scheduleData[day].forEach(person => {
-          const normKey = normalizeName(person.name);
-          if (!uniqueTeachersMap[normKey]) {
-            uniqueTeachersMap[normKey] = {
-              name: person.name,
-              role: person.role,
-              hadir: 0,
-              terlambat: 0,
-              izin: 0,
-              sakit: 0,
-              alpa: 0
-            };
-          }
-        });
+
+      Object.keys(accounts).forEach(username => {
+        const acc = accounts[username];
+        uniqueTeachersMap[username] = {
+          username: username,
+          name: acc.name,
+          role: acc.role,
+          hadir: 0,
+          terlambat: 0,
+          izin: 0,
+          sakit: 0,
+          alpa: 0,
+          recordsDetail: { Hadir: [], Terlambat: [], Izin: [], Sakit: [], Alpa: [] }
+        };
       });
 
-      // 2. Akumulasikan data dari attendanceRecords berdasarkan bulan yang dipilih
       if (attendanceRecords && bulanVal) {
         Object.keys(attendanceRecords).forEach(tgl => {
-          // Pastikan string tanggal diawali dengan format YYYY-MM
           if (tgl.startsWith(bulanVal)) {
-            const dayRecords = attendanceRecords[tgl];
-            const dayOfWeekMap = ["SABTU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
             const dObj = new Date(tgl + "T00:00:00");
+            if (dObj.getDay() === 0) return; 
+
+            const dayRecords = attendanceRecords[tgl];
+            const dayOfWeekMap = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
             const dayName = dayOfWeekMap[dObj.getDay()] || "SENIN";
-            const daySchedule = scheduleData[dayName] || [];
 
-            daySchedule.forEach(person => {
-              const record = dayRecords[person.id] || {};
-              const st = record.status || 'Hadir'; // Default Hadir jika tidak diubah
-              const normKey = normalizeName(person.name);
+            Object.keys(accounts).forEach(username => {
+              const record = dayRecords[username] || {};
+              const st = record.status || 'Alpa';
 
-              if (uniqueTeachersMap[normKey]) {
-                if (st === 'Hadir') uniqueTeachersMap[normKey].hadir++;
-                else if (st === 'Terlambat') uniqueTeachersMap[normKey].terlambat++;
-                else if (st === 'Izin') uniqueTeachersMap[normKey].izin++;
-                else if (st === 'Sakit') uniqueTeachersMap[normKey].sakit++;
-                else if (st === 'Alpa') uniqueTeachersMap[normKey].alpa++;
+              if (uniqueTeachersMap[username]) {
+                const formattedDateStr = dObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                const detailObj = { date: tgl, formattedDate: formattedDateStr, dayName: dayName, personId: username };
+
+                if (st === 'Hadir') {
+                  uniqueTeachersMap[username].hadir++;
+                  uniqueTeachersMap[username].recordsDetail.Hadir.push(detailObj);
+                } else if (st === 'Terlambat') {
+                  uniqueTeachersMap[username].terlambat++;
+                  uniqueTeachersMap[username].recordsDetail.Terlambat.push(detailObj);
+                } else if (st === 'Izin') {
+                  uniqueTeachersMap[username].izin++;
+                  uniqueTeachersMap[username].recordsDetail.Izin.push(detailObj);
+                } else if (st === 'Sakit') {
+                  uniqueTeachersMap[username].sakit++;
+                  uniqueTeachersMap[username].recordsDetail.Sakit.push(detailObj);
+                } else if (st === 'Alpa' || st === '') {
+                  uniqueTeachersMap[username].alpa++;
+                  uniqueTeachersMap[username].recordsDetail.Alpa.push(detailObj);
+                }
               }
             });
           }
         });
       }
+
+      globalTeacherMapForDetail = uniqueTeachersMap;
 
       const teachersList = Object.values(uniqueTeachersMap);
       if (teachersList.length === 0) {
@@ -511,30 +740,177 @@
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 border-b border-slate-100";
         tr.innerHTML = `
-          <td class="p-4 text-center text-slate-400">${index + 1}</td>
+          <td class="p-4 text-center text-slate-400 font-medium">${index + 1}</td>
           <td class="p-4 font-semibold text-slate-800">${teacher.name}<br><span class="text-xs font-normal text-slate-500">${teacher.role}</span></td>
-          <td class="p-4 text-center font-bold text-emerald-600">${teacher.hadir}</td>
-          <td class="p-4 text-center font-bold text-amber-600">${teacher.terlambat}</td>
-          <td class="p-4 text-center font-bold text-blue-600">${teacher.izin}</td>
-          <td class="p-4 text-center font-bold text-purple-600">${teacher.sakit}</td>
-          <td class="p-4 text-center font-bold text-rose-600">${teacher.alpa}</td>
+          <td class="p-4 text-center font-bold text-emerald-600 cursor-pointer hover:underline" onclick="openDetailModal('${teacher.username}', 'Hadir')">${teacher.hadir}</td>
+          <td class="p-4 text-center font-bold text-amber-600 cursor-pointer hover:underline" onclick="openDetailModal('${teacher.username}', 'Terlambat')">${teacher.terlambat}</td>
+          <td class="p-4 text-center font-bold text-blue-600 cursor-pointer hover:underline" onclick="openDetailModal('${teacher.username}', 'Izin')">${teacher.izin}</td>
+          <td class="p-4 text-center font-bold text-purple-600 cursor-pointer hover:underline" onclick="openDetailModal('${teacher.username}', 'Sakit')">${teacher.sakit}</td>
+          <td class="p-4 text-center font-bold text-rose-600 cursor-pointer hover:underline" onclick="openDetailModal('${teacher.username}', 'Alpa')">${teacher.alpa}</td>
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    function openDetailModal(username, statusType) {
+      if (currentUser.role !== 'KEPSEK') return;
+      const teacher = globalTeacherMapForDetail[username];
+      if (!teacher) return;
+
+      document.getElementById('detail-modal-title').innerText = `Rincian Status "${statusType}"`;
+      document.getElementById('detail-modal-subtitle').innerText = `Guru/Staf: ${teacher.name} (${bulanSelectedText()})`;
+
+      const tbody = document.getElementById('detail-modal-body');
+      tbody.innerHTML = '';
+
+      const listDetail = teacher.recordsDetail[statusType] || [];
+      if (listDetail.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">Tidak ada catatan pada status ini.</td></tr>`;
+      } else {
+        listDetail.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.className = "border-b border-slate-100 hover:bg-slate-50";
+          tr.innerHTML = `
+            <td class="p-3 font-semibold text-slate-700">${item.formattedDate}</td>
+            <td class="p-3 text-slate-500">${item.dayName}</td>
+            <td class="p-3 font-bold text-indigo-600">${statusType}</td>
+            <td class="p-3 text-center space-x-1">
+              <select onchange="changeStatusFromModal('${item.date}', '${item.personId}', this.value)" class="px-2 py-1 text-xs border rounded bg-white font-medium text-slate-700 focus:outline-none">
+                <option value="">Ubah Status...</option>
+                <option value="Hadir">Hadir</option>
+                <option value="Terlambat">Terlambat</option>
+                <option value="Izin">Izin</option>
+                <option value="Sakit">Sakit</option>
+                <option value="Alpa">Alpa</option>
+              </select>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      document.getElementById('detail-modal').classList.remove('hidden');
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detail-modal').classList.add('hidden');
+      renderRekapBulananTable();
+    }
+
+    function changeStatusFromModal(dateStr, personId, newStatus) {
+      if (!newStatus) return;
+      if (!attendanceRecords[dateStr]) attendanceRecords[dateStr] = {};
+      if (!attendanceRecords[dateStr][personId]) attendanceRecords[dateStr][personId] = {};
+
+      const currentTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      attendanceRecords[dateStr][personId].status = newStatus;
+      attendanceRecords[dateStr][personId].time = currentTime;
+
+      saveData();
+      alert("Status berhasil diperbarui secara manual!");
+      closeDetailModal();
+    }
+
+    function bulanSelectedText() {
+      const val = document.getElementById('select-bulan').value;
+      return val ? `Bulan: ${val}` : '';
+    }
+
+    function renderManageAccountsTable() {
+      const tbody = document.getElementById('accounts-table-body');
+      tbody.innerHTML = '';
+
+      let idx = 1;
+      Object.keys(accounts).forEach(username => {
+        const acc = accounts[username];
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 border-b border-slate-100";
+        tr.innerHTML = `
+          <td class="p-4 text-center text-slate-400">${idx++}</td>
+          <td class="p-4 font-mono font-bold text-indigo-900">${username}</td>
+          <td class="p-4 font-semibold text-slate-800">${acc.name}</td>
+          <td class="p-4"><span class="px-2 py-1 text-xs rounded bg-slate-100 text-slate-600 font-semibold">${acc.role}</span></td>
+          <td class="p-4">
+            <input type="text" id="pass-${username}" value="${acc.pass}" class="px-3 py-1 text-xs border border-slate-300 rounded focus:outline-none focus:border-indigo-600 font-mono">
+          </td>
+          <td class="p-4 text-center space-x-1">
+            <button onclick="updateAccountPassword('${username}')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded font-medium shadow-sm transition">
+              Simpan
+            </button>
+            ${username !== 'kepsek' ? `<button onclick="deleteAccount('${username}')" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs rounded font-medium shadow-sm transition"><i class="fa-solid fa-trash"></i></button>` : ''}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function addNewAccount() {
+      const u = document.getElementById('new-acc-user').value.trim().toLowerCase();
+      const name = document.getElementById('new-acc-name').value.trim().toUpperCase();
+      const pass = document.getElementById('new-acc-pass').value.trim();
+      const role = document.getElementById('new-acc-role').value.trim().toUpperCase();
+
+      if (!u || !name || !pass) {
+        alert("Username, Nama, dan Password harus diisi dengan lengkap!");
+        return;
+      }
+      if (accounts[u]) {
+        alert("Username tersebut sudah terdaftar!");
+        return;
+      }
+
+      accounts[u] = { pass: pass, role: role, name: name };
+      saveAccountsData();
+      renderManageAccountsTable();
+
+      document.getElementById('new-acc-user').value = '';
+      document.getElementById('new-acc-name').value = '';
+      document.getElementById('new-acc-pass').value = '';
+      alert(`Akun guru "${name}" berhasil ditambahkan!`);
+    }
+
+    function deleteAccount(username) {
+      if (username === 'kepsek') {
+        alert("Akun Kepala Sekolah utama tidak dapat dihapus!");
+        return;
+      }
+      if (confirm(`Apakah Anda yakin ingin menghapus akun "${username}"?`)) {
+        delete accounts[username];
+        saveAccountsData();
+        renderManageAccountsTable();
+        alert("Akun berhasil dihapus.");
+      }
+    }
+
+    function updateAccountPassword(username) {
+      const newPass = document.getElementById(`pass-${username}`).value.trim();
+      if (!newPass) {
+        alert("Password tidak boleh kosong!");
+        return;
+      }
+      accounts[username].pass = newPass;
+      saveAccountsData();
+      alert(`Password untuk akun "${username}" berhasil diperbarui!`);
     }
 
     function switchDay(day) {
       currentDay = day;
       const attSec = document.getElementById('attendance-section');
       const repBulanSec = document.getElementById('rekap-bulan-section');
+      const manageAccSec = document.getElementById('manage-accounts-section');
+
+      attSec.classList.add('hidden');
+      repBulanSec.classList.add('hidden');
+      manageAccSec.classList.add('hidden');
 
       if (day === 'REKAP_BULAN') {
-        attSec.classList.add('hidden');
         repBulanSec.classList.remove('hidden');
         renderRekapBulananTable();
+      } else if (day === 'MANAGE_ACCOUNTS') {
+        manageAccSec.classList.remove('hidden');
+        renderManageAccountsTable();
       } else {
         attSec.classList.remove('hidden');
-        repBulanSec.classList.add('hidden');
         document.getElementById('selected-day-title').innerText = `HARI ${day}`;
         renderAttendanceTable();
       }
@@ -547,6 +923,7 @@
       tabs.forEach(tab => {
         const text = tab.innerText.trim().toUpperCase();
         if ((currentDay === 'REKAP_BULAN' && text.includes('REKAP PER BULAN')) || 
+            (currentDay === 'MANAGE_ACCOUNTS' && text.includes('KELOLA AKUN')) ||
             text === currentDay) {
           tab.className = "day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow-sm transition";
         } else {
@@ -563,6 +940,14 @@
       }
     }
 
+    function saveAccountsData() {
+      if (db) {
+        db.ref('accounts_config').set(accounts);
+      } else {
+        localStorage.setItem('sma_azmanawadi_accounts', JSON.stringify(accounts));
+      }
+    }
+
     function loadFromLocalStorage() {
       const data = localStorage.getItem('sma_azmanawadi_absensi_date');
       if (data) {
@@ -570,46 +955,21 @@
       }
     }
 
+    function loadAccountsFromStorage() {
+      const data = localStorage.getItem('sma_azmanawadi_accounts');
+      if (data) {
+        accounts = JSON.parse(data);
+      }
+    }
+
     function downloadMonthlyCSV() {
       const bulanVal = document.getElementById('select-bulan').value;
-      let uniqueTeachersMap = {};
-      Object.keys(scheduleData).forEach(day => {
-        scheduleData[day].forEach(person => {
-          const normKey = normalizeName(person.name);
-          if (!uniqueTeachersMap[normKey]) {
-            uniqueTeachersMap[normKey] = { name: person.name, role: person.role, hadir: 0, terlambat: 0, izin: 0, sakit: 0, alpa: 0 };
-          }
-        });
-      });
-
-      if (attendanceRecords && bulanVal) {
-        Object.keys(attendanceRecords).forEach(tgl => {
-          if (tgl.startsWith(bulanVal)) {
-            const dayRecords = attendanceRecords[tgl];
-            const dayOfWeekMap = ["SABTU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
-            const dObj = new Date(tgl + "T00:00:00");
-            const dayName = dayOfWeekMap[dObj.getDay()] || "SENIN";
-            const daySchedule = scheduleData[dayName] || [];
-
-            daySchedule.forEach(person => {
-              const record = dayRecords[person.id] || {};
-              const st = record.status || 'Hadir';
-              const normKey = normalizeName(person.name);
-              if (uniqueTeachersMap[normKey]) {
-                if (st === 'Hadir') uniqueTeachersMap[normKey].hadir++;
-                else if (st === 'Terlambat') uniqueTeachersMap[normKey].terlambat++;
-                else if (st === 'Izin') uniqueTeachersMap[normKey].izin++;
-                else if (st === 'Sakit') uniqueTeachersMap[normKey].sakit++;
-                else if (st === 'Alpa') uniqueTeachersMap[normKey].alpa++;
-              }
-            });
-          }
-        });
-      }
-
       let csvContent = "data:text/csv;charset=utf-8,No,Nama Guru/Staf,Jabatan,Hadir,Terlambat,Izin,Sakit,Alpa\n";
-      Object.values(uniqueTeachersMap).forEach((teacher, index) => {
-        csvContent += `${index + 1},"${teacher.name}","${teacher.role}",${teacher.hadir},${teacher.terlambat},${teacher.izin},${teacher.sakit},${teacher.alpa}\n`;
+
+      let idx = 1;
+      Object.keys(accounts).forEach(username => {
+        const teacher = globalTeacherMapForDetail[username] || { name: accounts[username].name, role: accounts[username].role, hadir: 0, terlambat: 0, izin: 0, sakit: 0, alpa: 0 };
+        csvContent += `${idx++},"${teacher.name}","${teacher.role}",${teacher.hadir},${teacher.terlambat},${teacher.izin},${teacher.sakit},${teacher.alpa}\n`;
       });
 
       const encodedUri = encodeURI(csvContent);
