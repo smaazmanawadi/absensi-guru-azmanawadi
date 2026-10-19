@@ -603,7 +603,6 @@
       document.getElementById('attendance-date').value = selectedDate;
       document.getElementById('select-bulan').value = selectedDate.slice(0, 7);
 
-      // Default tanggal awal & akhir untuk histori guru
       const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
       document.getElementById('guru-history-start').value = firstDay;
       document.getElementById('guru-history-end').value = selectedDate;
@@ -624,7 +623,7 @@
       if (db) {
         db.ref('absensi_guru').on('value', (snapshot) => {
           const serverData = snapshot.val();
-          if (serverData) attendanceRecords = serverData;
+          attendanceRecords = serverData ? serverData : {};
           updateDateAndDay(today);
           if (currentUser.role !== 'KEPSEK') renderGuruHistoryTable();
         });
@@ -646,7 +645,6 @@
       }
     }
 
-    /* Fungsi Modal Ubah Password Mandiri Guru */
     function openChangePassModal() {
       document.getElementById('change-pass-old').value = '';
       document.getElementById('change-pass-new').value = '';
@@ -695,7 +693,6 @@
         return;
       }
 
-      // Simpan perubahan password
       accounts[currentUser.username].pass = newPass;
       currentUser.pass = newPass;
       sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -784,7 +781,7 @@
     }
 
     function resetAttendance(personId) {
-      if (currentUser.role !== 'KEPSEK') return;
+      if (currentUser.username !== 'kepsek') return;
       if (!attendanceRecords[selectedDate]) attendanceRecords[selectedDate] = {};
       if (!attendanceRecords[selectedDate][personId]) attendanceRecords[selectedDate][personId] = {};
 
@@ -795,7 +792,7 @@
     }
 
     function removeTeacherFromSchedule(personId) {
-      if (currentUser.role !== 'KEPSEK') return;
+      if (currentUser.username !== 'kepsek') return;
       if (currentDay === "MINGGU" || currentDay === "REKAP_BULAN" || currentDay === "MANAGE_ACCOUNTS") return;
 
       if (!scheduleData[currentDay]) return;
@@ -809,7 +806,7 @@
     }
 
     function addTeacherToCurrentDaySchedule() {
-      if (currentUser.role !== 'KEPSEK') return;
+      if (currentUser.username !== 'kepsek') return;
       if (currentDay === "MINGGU" || currentDay === "REKAP_BULAN" || currentDay === "MANAGE_ACCOUNTS") {
         alert("Pilih hari aktif (Senin - Sabtu) terlebih dahulu!");
         return;
@@ -852,22 +849,26 @@
     }
 
     function resetMonthlyAttendance() {
-      if (currentUser.role !== 'KEPSEK') return;
+      if (currentUser.username !== 'kepsek') return;
       const bulanVal = document.getElementById('select-bulan').value;
       if (!bulanVal) {
         alert("Silakan pilih bulan terlebih dahulu!");
         return;
       }
 
-      if (confirm(`Apakah Anda yakin ingin mereset seluruh status absensi pada bulan ${bulanVal}? Semua data kehadiran akan dikosongkan.`)) {
+      if (confirm(`Apakah Anda yakin ingin mereset seluruh status absensi pada bulan ${bulanVal}? Semua data kehadiran akan dikosongkan total.`)) {
+        // Alih-alih menghapus tanggal, kita set status setiap guru pada setiap tanggal di bulan tersebut menjadi '' (kosong) atau dicatat explicit reset
         Object.keys(attendanceRecords).forEach(tgl => {
           if (tgl.startsWith(bulanVal)) {
-            delete attendanceRecords[tgl];
+            Object.keys(attendanceRecords[tgl]).forEach(personId => {
+              attendanceRecords[tgl][personId].status = '';
+              attendanceRecords[tgl][personId].time = '-';
+            });
           }
         });
         saveData();
         renderRekapBulananTable();
-        alert("Semua data absensi pada bulan tersebut berhasil direset!");
+        alert("Semua data absensi pada bulan tersebut berhasil direset menjadi 0!");
       }
     }
 
@@ -914,13 +915,10 @@
         const accInfo = accounts[person.id] || { name: 'Tidak Dikenal', role: person.role };
         const record = dayData[person.id] || {};
         const currentStatus = record.status || '';
-        // Jika tidak diisi, karena dia terjadwal di hari itu, maka otomatis Alpa
         const effectiveStatus = currentStatus === '' ? 'Alpa' : currentStatus;
 
-        // Stat counter untuk seluruh data hari ini
         if (counts[effectiveStatus] !== undefined) counts[effectiveStatus]++;
 
-        // Filtering pencarian nama/role & status
         const matchSearch = accInfo.name.toLowerCase().includes(searchVal) || accInfo.role.toLowerCase().includes(searchVal);
         const matchStatus = filterStatus === 'ALL' || effectiveStatus === filterStatus;
 
@@ -951,13 +949,14 @@
           `;
         } else {
           let deleteBtnHTML = `<button onclick="removeTeacherFromSchedule('${person.id}')" title="Hapus dari jadwal hari ini" class="px-2.5 py-1.5 text-xs font-semibold rounded-md border bg-rose-50 hover:bg-rose-100 text-rose-600 transition"><i class="fa-solid fa-user-minus"></i></button>`;
+          let resetBtnHTML = currentUser.username === 'kepsek' ? `<button onclick="resetAttendance('${person.id}')" title="Reset Status ke Netral" class="px-2.5 py-1.5 text-xs font-semibold rounded-md border bg-slate-200 hover:bg-slate-300 text-slate-700 transition"><i class="fa-solid fa-rotate-left"></i></button>` : '';
           statusButtonsHTML = `
             <button onclick="setStatus('${person.id}', 'Hadir')" class="status-btn px-2.5 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Hadir' ? 'active-hadir' : 'bg-white text-slate-600 hover:bg-slate-100'}">Hadir</button>
             <button onclick="setStatus('${person.id}', 'Terlambat')" class="status-btn px-2.5 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Terlambat' ? 'active-terlambat' : 'bg-white text-slate-600 hover:bg-slate-100'}">Terlambat</button>
             <button onclick="setStatus('${person.id}', 'Izin')" class="status-btn px-2.5 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Izin' ? 'active-izin' : 'bg-white text-slate-600 hover:bg-slate-100'}">Izin</button>
             <button onclick="setStatus('${person.id}', 'Sakit')" class="status-btn px-2.5 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Sakit' ? 'active-sakit' : 'bg-white text-slate-600 hover:bg-slate-100'}">Sakit</button>
             <button onclick="setStatus('${person.id}', 'Alpa')" class="status-btn px-2.5 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Alpa' ? 'active-alpa' : 'bg-white text-slate-600 hover:bg-slate-100'}">Alpa</button>
-            <button onclick="resetAttendance('${person.id}')" title="Reset Status ke Netral" class="px-2.5 py-1.5 text-xs font-semibold rounded-md border bg-slate-200 hover:bg-slate-300 text-slate-700 transition"><i class="fa-solid fa-rotate-left"></i></button>
+            ${resetBtnHTML}
             ${deleteBtnHTML}
           `;
         }
@@ -1083,31 +1082,32 @@
       if (bulanVal) {
         const dayOfWeekMap = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
         
-        // Loop setiap hari dalam bulan yang dipilih
         const [year, month] = bulanVal.split('-').map(Number);
         const daysInMonth = new Date(year, month, 0).getDate();
+        const todayStr = new Date().toISOString().split('T')[0];
 
         for (let day = 1; day <= daysInMonth; day++) {
           const dayStr = String(day).padStart(2, '0');
           const tgl = `${bulanVal}-${dayStr}`;
+
+          if (tgl > todayStr) break;
+
           const dObj = new Date(tgl + "T00:00:00");
           const dayIndex = dObj.getDay();
 
-          // Abaikan hari Minggu (libur)
-          if (dayIndex === 0) continue;
+          if (dayIndex === 0) continue; // Abaikan Minggu
 
           const dayName = dayOfWeekMap[dayIndex];
           const scheduledList = scheduleData[dayName] || [];
           const dayRecords = attendanceRecords[tgl] || {};
           const formattedDateStr = dObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 
-          // Cek hanya guru yang terjadwal pada hari tersebut
           scheduledList.forEach(person => {
             const username = person.id;
             if (!uniqueTeachersMap[username]) return;
 
             const record = dayRecords[username] || {};
-            const st = record.status || ''; // Kosong berarti belum absen / dianggap alpa karena terjadwal
+            const st = record.status || '';
             const detailObj = { date: tgl, formattedDate: formattedDateStr, dayName: dayName, personId: username };
 
             if (st === 'Hadir') {
@@ -1122,11 +1122,11 @@
             } else if (st === 'Sakit') {
               uniqueTeachersMap[username].sakit++;
               uniqueTeachersMap[username].recordsDetail.Sakit.push(detailObj);
-            } else {
-              // Jika terjadwal tapi tidak absen / status kosong, maka terhitung Alpa
+            } else if (st === 'Alpa') {
               uniqueTeachersMap[username].alpa++;
               uniqueTeachersMap[username].recordsDetail.Alpa.push(detailObj);
             }
+            // Jika st === '' (kosong / telah di-reset atau belum diapa-apakan), maka tidak dimasukkan ke hitungan otomatis alpa agar bisa bersih menjadi 0 jika di-reset.
           });
         }
       }
@@ -1139,21 +1139,21 @@
         return;
       }
 
+      const isMainKepsek = currentUser.username === 'kepsek';
+
       teachersList.forEach((teacher, index) => {
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 border-b border-slate-100";
         tr.innerHTML = `
           <td class="p-4 text-center text-slate-400 font-medium">${index + 1}</td>
           <td class="p-4 font-semibold text-slate-800">${teacher.name}<br><span class="text-xs font-normal text-slate-500">${teacher.role}</span></td>
-          <td class="p-4 text-center font-bold text-emerald-600 cursor-pointer hover:underline" onclick="openDetailModal('${teacher.username}', 'Hadir')">${teacher.hadir}</td>
-          <td class="p-4 text-center font-bold text-amber-600 cursor-pointer hover:underline" onclick="openDetailModal('${teacher.username}', 'Terlambat')">${teacher.terlambat}</td>
-          <td class="p-4 text-center font-bold text-blue-600 cursor-pointer hover:underline" onclick="openDetailModal('${teacher.username}', 'Izin')">${teacher.izin}</td>
-          <td class="p-4 text-center font-bold text-purple-600 cursor-pointer hover:underline" onclick="openDetailModal('${teacher.username}', 'Sakit')">${teacher.sakit}</td>
-          <td class="p-4 text-center font-bold text-rose-600 cursor-pointer hover:underline" onclick="openDetailModal('${teacher.username}', 'Alpa')">${teacher.alpa}</td>
+          <td class="p-4 text-center font-bold text-emerald-600 ${isMainKepsek ? 'cursor-pointer hover:underline' : ''}" ${isMainKepsek ? `onclick="openDetailModal('${teacher.username}', 'Hadir')"` : ''}>${teacher.hadir}</td>
+          <td class="p-4 text-center font-bold text-amber-600 ${isMainKepsek ? 'cursor-pointer hover:underline' : ''}" ${isMainKepsek ? `onclick="openDetailModal('${teacher.username}', 'Terlambat')"` : ''}>${teacher.terlambat}</td>
+          <td class="p-4 text-center font-bold text-blue-600 ${isMainKepsek ? 'cursor-pointer hover:underline' : ''}" ${isMainKepsek ? `onclick="openDetailModal('${teacher.username}', 'Izin')"` : ''}>${teacher.izin}</td>
+          <td class="p-4 text-center font-bold text-purple-600 ${isMainKepsek ? 'cursor-pointer hover:underline' : ''}" ${isMainKepsek ? `onclick="openDetailModal('${teacher.username}', 'Sakit')"` : ''}>${teacher.sakit}</td>
+          <td class="p-4 text-center font-bold text-rose-600 ${isMainKepsek ? 'cursor-pointer hover:underline' : ''}" ${isMainKepsek ? `onclick="openDetailModal('${teacher.username}', 'Alpa')"` : ''}>${teacher.alpa}</td>
           <td class="p-4 text-center">
-            <button onclick="openFullTeacherHistory('${teacher.username}')" title="Cek Riwayat Lengkap" class="px-2.5 py-1 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-lg border border-indigo-200 transition">
-              <i class="fa-solid fa-list-check mr-1"></i> Rincian
-            </button>
+            ${isMainKepsek ? `<button onclick="openFullTeacherHistory('${teacher.username}')" title="Cek Riwayat Lengkap" class="px-2.5 py-1 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-lg border border-indigo-200 transition"><i class="fa-solid fa-list-check mr-1"></i> Rincian</button>` : '<span class="text-xs text-slate-400">Khusus Kepsek</span>'}
           </td>
         `;
         tbody.appendChild(tr);
@@ -1161,7 +1161,7 @@
     }
 
     function openFullTeacherHistory(username) {
-      if (currentUser.role !== 'KEPSEK') return;
+      if (currentUser.username !== 'kepsek') return;
       const teacher = globalTeacherMapForDetail[username];
       if (!teacher) return;
 
@@ -1209,7 +1209,7 @@
     }
 
     function openDetailModal(username, statusType) {
-      if (currentUser.role !== 'KEPSEK') return;
+      if (currentUser.username !== 'kepsek') return;
       const teacher = globalTeacherMapForDetail[username];
       if (!teacher) return;
 
@@ -1254,7 +1254,7 @@
     }
 
     function changeStatusFromModal(dateStr, personId, newStatus) {
-      if (currentUser.role !== 'KEPSEK') return;
+      if (currentUser.username !== 'kepsek') return;
       if (!newStatus) return;
       if (!attendanceRecords[dateStr]) attendanceRecords[dateStr] = {};
       if (!attendanceRecords[dateStr][personId]) attendanceRecords[dateStr][personId] = {};
@@ -1446,7 +1446,7 @@
     }
 
     function downloadMonthlyCSV() {
-      if (currentUser.role !== 'KEPSEK') return;
+      if (currentUser.username !== 'kepsek') return;
       const bulanVal = document.getElementById('select-bulan').value;
       let csvContent = "data:text/csv;charset=utf-8,No,Nama Guru/Staf,Jabatan,Hadir,Terlambat,Izin,Sakit,Alpa\n";
 
