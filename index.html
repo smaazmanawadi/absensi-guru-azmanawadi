@@ -96,7 +96,7 @@
           </div>
           <div>
             <h1 class="text-2xl font-bold tracking-wide">SMA AZMANAWADI</h1>
-            <p class="text-xs text-indigo-200" id="header-subtitle">Sistem Absensi Guru & Staf Harian[cite: 1]</p>
+            <p class="text-xs text-indigo-200" id="header-subtitle">Sistem Absensi Guru & Staf Harian</p>
           </div>
         </div>
         
@@ -144,7 +144,7 @@
               <h2 id="selected-day-title" class="text-xl font-bold text-slate-800">HARI SENIN</h2>
               <span id="display-formatted-date" class="text-xs bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1 rounded-full border border-indigo-200"></span>
             </div>
-            <p class="text-xs text-slate-500 mt-0.5" id="attendance-subtitle">Silakan tentukan status kehadiran guru & staf di bawah ini[cite: 1].</p>
+            <p class="text-xs text-slate-500 mt-0.5" id="attendance-subtitle">Silakan tentukan status kehadiran guru & staf di bawah ini.</p>
           </div>
 
           <div id="stats-container" class="flex flex-wrap gap-2 text-xs">
@@ -176,6 +176,28 @@
             </table>
           </div>
         </div>
+
+        <!-- Panel Tambah/Hapus Guru di Jadwal Harian (Khusus Kepsek) -->
+        <div id="manage-schedule-container" class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4 no-print hidden">
+          <h3 class="text-md font-bold text-slate-850 flex items-center">
+            <i class="fa-solid fa-user-gear mr-2 text-indigo-600"></i>
+            <span id="manage-schedule-title">Kelola Tugas Guru Harian</span>
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Pilih Guru dari Daftar Akun</label>
+              <select id="select-teacher-to-add" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 bg-slate-50 font-semibold">
+                <!-- Populated JS -->
+              </select>
+            </div>
+            <div>
+              <button onclick="addTeacherToCurrentDaySchedule()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition flex items-center justify-center space-x-1 w-full md:w-auto">
+                <i class="fa-solid fa-user-plus mr-1"></i>
+                <span>Tambahkan ke Jadwal Hari Ini</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Rekap Bulanan View -->
@@ -188,7 +210,7 @@
         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4 no-print">
           <div>
             <h2 class="text-xl font-bold text-slate-800">Rekapitulasi Kehadiran Per Bulan</h2>
-            <p class="text-xs text-slate-500">Klik angka pada tabel untuk melihat rincian tanggal, mengedit, atau mereset status[cite: 1].</p>
+            <p class="text-xs text-slate-500">Klik angka pada tabel untuk melihat rincian tanggal, mengedit, atau mereset status.</p>
           </div>
           <div class="flex flex-wrap items-center gap-3">
             <div>
@@ -261,7 +283,7 @@
 
         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
           <h2 class="text-xl font-bold text-slate-800">Daftar Akun & Kata Sandi</h2>
-          <p class="text-xs text-slate-500">Anda dapat mengubah sandi atau menghapus akun guru dari sistem.</p>
+          <p class="text-xs text-slate-500">Anda dapat mengedit nama, mengubah sandi, atau menghapus akun guru dari sistem.</p>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -271,9 +293,9 @@
                 <tr class="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase">
                   <th class="p-4 w-12 text-center">No</th>
                   <th class="p-4">Username</th>
-                  <th class="p-4">Nama Lengkap</th>
+                  <th class="p-4">Nama Lengkap & Gelar</th>
                   <th class="p-4">Peran (Role)</th>
-                  <th class="p-4">Password Baru</th>
+                  <th class="p-4">Password</th>
                   <th class="p-4 text-center">Aksi</th>
                 </tr>
               </thead>
@@ -306,7 +328,7 @@
       'abdullah': { pass: '123456', role: 'GURU', name: 'M. ABDULLAH, S.PD' },
       'dewi': { pass: '123456', role: 'GURU', name: 'BQ. DEWI PUSPITASARI, S.PD' },
       'samsul': { pass: '123456', role: 'GURU', name: 'SAMSUL HADI, S.PD.I' },
-      'staf_tambahan': { pass: '123456', role: 'STAF', name: 'STAF ADMINISTRASI' }
+      'kukuh': { pass: '123456', role: 'GURU', name: 'L. KUKUH YOGA PRATAMA PUTRA, S.PD' }
     };
 
     let currentUser = null;
@@ -333,6 +355,20 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       loadAccountsFromStorage();
+      
+      // Tambahkan event listener untuk tombol Enter pada form login
+      const loginUserEl = document.getElementById('login-user');
+      const loginPassEl = document.getElementById('login-pass');
+      
+      const handleEnterLogin = (e) => {
+        if (e.key === 'Enter') {
+          processLogin();
+        }
+      };
+      
+      loginUserEl.addEventListener('keypress', handleEnterLogin);
+      loginPassEl.addEventListener('keypress', handleEnterLogin);
+
       const savedUser = sessionStorage.getItem('currentUser');
       if (savedUser) {
         currentUser = JSON.parse(savedUser);
@@ -362,79 +398,85 @@
       document.getElementById('firebase-status').innerText = "Mode Lokal";
     }
 
-    const scheduleData = {
+    let scheduleData = {
       "SENIN": [
-        { id: "kepsek", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
-        { id: "mursidin", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
-        { id: "rosi", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
-        { id: "awaludin", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
-        { id: "susilawati", name: "SUSILAWATI, S.PD", role: "TU" },
-        { id: "salwa", name: "SALIMATUL HUZWATI, S.PD", role: "GURU/BENDAHARA" },
-        { id: "lilis", name: "LISRATUL AENY, S.KOM", role: "GURU" },
-        { id: "miniah", name: "MINIAH, S.PD", role: "GURU" }
+        { id: "kepsek", role: "KEPSEK" },
+        { id: "mursidin", role: "WAKASIS" },
+        { id: "rosi", role: "WAKASARPRAS" },
+        { id: "awaludin", role: "WAKAKURMAS" },
+        { id: "susilawati", role: "TU" },
+        { id: "salwa", role: "GURU/BENDAHARA" },
+        { id: "lilis", role: "GURU" },
+        { id: "miniah", role: "GURU" },
+        { id: "kukuh", role: "GURU" }
       ],
       "SELASA": [
-        { id: "kepsek", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
-        { id: "mursidin", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
-        { id: "rosi", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
-        { id: "awaludin", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
-        { id: "susilawati", name: "SUSILAWATI, S.PD", role: "TU" },
-        { id: "bukhori", name: "BUKHORI ABDILLAH, S.PD", role: "GURU/OP" },
-        { id: "pandi", name: "ALPANDI ALANSORI, S.PD", role: "GURU" },
-        { id: "miniah", name: "MINIAH, S.PD", role: "GURU" },
-        { id: "lilis", name: "LISRATUL AENY, S.KOM", role: "GURU" },
-        { id: "anwari", name: "MATHLAUL ANWARI, S.PD", role: "GURU" },
-        { id: "nurul", name: "NURUL HIDAYATI, S.PD", role: "GURU" },
-        { id: "salwa", name: "SALIMATUL HUZWATI, S.PD", role: "GURU" }
+        { id: "kepsek", role: "KEPSEK" },
+        { id: "mursidin", role: "WAKASIS" },
+        { id: "rosi", role: "WAKASARPRAS" },
+        { id: "awaludin", role: "WAKAKURMAS" },
+        { id: "susilawati", role: "TU" },
+        { id: "bukhori", role: "GURU/OP" },
+        { id: "pandi", role: "GURU" },
+        { id: "miniah", role: "GURU" },
+        { id: "lilis", role: "GURU" },
+        { id: "anwari", role: "GURU" },
+        { id: "nurul", role: "GURU" },
+        { id: "salwa", role: "GURU" },
+        { id: "kukuh", role: "GURU" }
       ],
       "RABU": [
-        { id: "kepsek", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
-        { id: "mursidin", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
-        { id: "rosi", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
-        { id: "awaludin", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
-        { id: "susilawati", name: "SUSILAWATI, S.PD", role: "TU" },
-        { id: "pandi", name: "ALPANDI ALANSORI, S.PD", role: "GURU" },
-        { id: "jihad", name: "M. NURUL JIHAD, S.PD", role: "GURU" },
-        { id: "abdullah", name: "M. ABDULLAH, S.PD", role: "GURU" },
-        { id: "dewi", name: "BQ. DEWI PUSPITASARI, S.PD", role: "GURU" },
-        { id: "nurul", name: "NURUL HIDAYATI, S.PD", role: "GURU" },
-        { id: "bukhori", name: "BUKHORI ABDILLAH, S.PD", role: "GURU/OP" },
-        { id: "miniah", name: "MINIAH, S.PD", role: "GURU" }
+        { id: "kepsek", role: "KEPSEK" },
+        { id: "mursidin", role: "WAKASIS" },
+        { id: "rosi", role: "WAKASARPRAS" },
+        { id: "awaludin", role: "WAKAKURMAS" },
+        { id: "susilawati", role: "TU" },
+        { id: "pandi", role: "GURU" },
+        { id: "jihad", role: "GURU" },
+        { id: "abdullah", role: "GURU" },
+        { id: "dewi", role: "GURU" },
+        { id: "nurul", role: "GURU" },
+        { id: "bukhori", role: "GURU/OP" },
+        { id: "miniah", role: "GURU" },
+        { id: "kukuh", role: "GURU" }
       ],
       "KAMIS": [
-        { id: "kepsek", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
-        { id: "mursidin", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
-        { id: "rosi", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
-        { id: "awaludin", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
-        { id: "susilawati", name: "SUSILAWATI, S.PD", role: "TU" },
-        { id: "nurul", name: "NURUL HIDAYATI, S.PD", role: "GURU" },
-        { id: "samsul", name: "SAMSUL HADI, S.PD.I", role: "GURU" },
-        { id: "pandi", name: "ALPANDI ALANSORI, S.PD", role: "GURU" },
-        { id: "dewi", name: "BQ. DEWI PUSPITASARI, S.PD", role: "GURU" },
-        { id: "bukhori", name: "BUKHORI ABDILLAH, S.PD", role: "GURU/OP" },
-        { id: "jihad", name: "M. NURUL JIHAD, S.PD", role: "GURU" },
-        { id: "miniah", name: "MINIAH, S.PD", role: "GURU" }
+        { id: "kepsek", role: "KEPSEK" },
+        { id: "mursidin", role: "WAKASIS" },
+        { id: "rosi", role: "WAKASARPRAS" },
+        { id: "awaludin", role: "WAKAKURMAS" },
+        { id: "susilawati", role: "TU" },
+        { id: "nurul", role: "GURU" },
+        { id: "samsul", role: "GURU" },
+        { id: "pandi", role: "GURU" },
+        { id: "dewi", role: "GURU" },
+        { id: "bukhori", role: "GURU/OP" },
+        { id: "jihad", role: "GURU" },
+        { id: "miniah", role: "GURU" },
+        { id: "kukuh", role: "GURU" }
       ],
       "JUMAT": [
-        { id: "kepsek", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
-        { id: "mursidin", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
-        { id: "rosi", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
-        { id: "awaludin", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
-        { id: "susilawati", name: "SUSILAWATI, S.PD", role: "TU" },
-        { id: "abdullah", name: "M. ABDULLAH, S.PD., GR", role: "GURU" },
-        { id: "jihad", name: "M. NURUL JIHAD, S.PD", role: "GURU" },
-        { id: "bukhori", name: "BUKHORI ABDILLAH, S.PD", role: "GURU" }
+        { id: "kepsek", role: "KEPSEK" },
+        { id: "mursidin", role: "WAKASIS" },
+        { id: "rosi", role: "WAKASARPRAS" },
+        { id: "awaludin", role: "WAKAKURMAS" },
+        { id: "susilawati", role: "TU" },
+        { id: "abdullah", role: "GURU" },
+        { id: "jihad", role: "GURU" },
+        { id: "bukhori", role: "GURU" },
+        { id: "kukuh", role: "GURU" }
       ],
       "SABTU": [
-        { id: "kepsek", name: "M. IDRIK RAHMAN, MA", role: "KEPSEK" },
-        { id: "mursidin", name: "MURSIDIN, S.PD., GR", role: "WAKASIS" },
-        { id: "rosi", name: "L. YULIZARROSI, S.PD., GR", role: "WAKASARPRAS" },
-        { id: "awaludin", name: "AWALUDIN, S.PD., GR", role: "WAKAKURMAS" },
-        { id: "susilawati", name: "SUSILAWATI, S.PD", role: "TU" },
-        { id: "bukhori", name: "BUKHORI ABDILLAH, S.PD", role: "GURU/OP" },
-        { id: "anwari", name: "MATHLAUL ANWARI, S.PD", role: "GURU" },
-        { id: "pandi", name: "ALPANDI ALANSORI, S.PD", role: "GURU" },
-        { id: "salwa", name: "SALIMATUL HUZWATI, S.PD", role: "GURU/BENDAHARA" }
+        { id: "kepsek", role: "KEPSEK" },
+        { id: "mursidin", role: "WAKASIS" },
+        { id: "rosi", role: "WAKASARPRAS" },
+        { id: "awaludin", role: "WAKAKURMAS" },
+        { id: "susilawati", role: "TU" },
+        { id: "bukhori", role: "GURU/OP" },
+        { id: "anwari", role: "GURU" },
+        { id: "pandi", role: "GURU" },
+        { id: "salwa", role: "GURU/BENDAHARA" },
+        { id: "kukuh", role: "GURU" }
       ]
     };
 
@@ -450,23 +492,29 @@
 
       if (currentUser.role !== 'KEPSEK') {
         document.getElementById('kepsek-nav').classList.add('hidden');
-        document.getElementById('header-subtitle').innerText = `Portal Absensi Mandiri - ${currentUser.name}`;
+        document.getElementById('header-subtitle').innerText = `Portal Absensi Mandiri - ${accounts[currentUser.username] ? accounts[currentUser.username].name : currentUser.name}`;
         document.getElementById('attendance-subtitle').innerText = "Silakan catat kehadiran Anda hari ini.";
         document.getElementById('stats-container').classList.add('hidden');
+      } else {
+        document.getElementById('manage-schedule-container').classList.remove('hidden');
+        populateTeacherSelectDropdown();
       }
 
       if (db) {
         db.ref('absensi_guru').on('value', (snapshot) => {
           const serverData = snapshot.val();
-          if (serverData) {
-            attendanceRecords = serverData;
-          }
+          if (serverData) attendanceRecords = serverData;
           updateDateAndDay(today);
         });
         db.ref('accounts_config').on('value', (snapshot) => {
           const serverAcc = snapshot.val();
-          if (serverAcc) {
-            accounts = serverAcc;
+          if (serverAcc) accounts = serverAcc;
+        });
+        db.ref('schedule_config').on('value', (snapshot) => {
+          const serverSch = snapshot.val();
+          if (serverSch) {
+            scheduleData = serverSch;
+            updateDateAndDay(new Date(selectedDate + "T00:00:00"));
           }
         });
       } else {
@@ -499,6 +547,7 @@
 
       if (currentUser.role === 'KEPSEK') {
         renderDayTabs();
+        document.getElementById('manage-schedule-title').innerText = `Kelola Tugas Guru Harian (${currentDay})`;
         if (currentDay === 'REKAP_BULAN') {
           renderRekapBulananTable();
         } else if (currentDay !== 'MANAGE_ACCOUNTS') {
@@ -539,6 +588,63 @@
       renderAttendanceTable();
     }
 
+    function removeTeacherFromSchedule(personId) {
+      if (currentUser.role !== 'KEPSEK') return;
+      if (currentDay === "MINGGU" || currentDay === "REKAP_BULAN" || currentDay === "MANAGE_ACCOUNTS") return;
+
+      if (!scheduleData[currentDay]) return;
+
+      if (confirm(`Apakah Anda yakin ingin mengeluarkan guru ini dari daftar piket hari ${currentDay}?`)) {
+        scheduleData[currentDay] = scheduleData[currentDay].filter(p => p.id !== personId);
+        saveScheduleData();
+        renderAttendanceTable();
+        alert("Guru berhasil dihapus dari jadwal harian!");
+      }
+    }
+
+    function addTeacherToCurrentDaySchedule() {
+      if (currentUser.role !== 'KEPSEK') return;
+      if (currentDay === "MINGGU" || currentDay === "REKAP_BULAN" || currentDay === "MANAGE_ACCOUNTS") {
+        alert("Pilih hari aktif (Senin - Sabtu) terlebih dahulu!");
+        return;
+      }
+
+      const selectEl = document.getElementById('select-teacher-to-add');
+      const username = selectEl.value;
+      if (!username || !accounts[username]) return;
+
+      if (!scheduleData[currentDay]) scheduleData[currentDay] = [];
+
+      const exists = scheduleData[currentDay].some(p => p.id === username);
+      if (exists) {
+        alert("Guru tersebut sudah ada dalam jadwal tugas hari ini!");
+        return;
+      }
+
+      scheduleData[currentDay].push({
+        id: username,
+        role: accounts[username].role
+      });
+
+      saveScheduleData();
+      renderAttendanceTable();
+      alert(`Guru "${accounts[username].name}" berhasil ditambahkan ke jadwal hari ${currentDay}!`);
+    }
+
+    function populateTeacherSelectDropdown() {
+      const selectEl = document.getElementById('select-teacher-to-add');
+      if (!selectEl) return;
+      selectEl.innerHTML = '';
+
+      Object.keys(accounts).forEach(username => {
+        const acc = accounts[username];
+        const opt = document.createElement('option');
+        opt.value = username;
+        opt.textContent = `${acc.name} (${acc.role})`;
+        selectEl.appendChild(opt);
+      });
+    }
+
     function resetMonthlyAttendance() {
       if (currentUser.role !== 'KEPSEK') return;
       const bulanVal = document.getElementById('select-bulan').value;
@@ -571,6 +677,15 @@
       const tbody = document.getElementById('attendance-body');
       tbody.innerHTML = '';
 
+      const manageScheduleEl = document.getElementById('manage-schedule-container');
+      if (currentUser.role === 'KEPSEK') {
+        if (currentDay === "MINGGU" || currentDay === "REKAP_BULAN" || currentDay === "MANAGE_ACCOUNTS") {
+          manageScheduleEl.classList.add('hidden');
+        } else {
+          manageScheduleEl.classList.remove('hidden');
+        }
+      }
+
       if (currentDay === "MINGGU") {
         tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400 font-medium">Hari Minggu adalah hari libur. Tidak ada absensi.</td></tr>`;
         return;
@@ -580,14 +695,14 @@
       if (currentUser.role === 'KEPSEK') {
         list = scheduleData[currentDay] || [];
       } else {
-        // Akun Guru hanya memunculkan data diri mereka sendiri
-        list = [{ id: currentUser.username, name: currentUser.name, role: currentUser.role }];
+        list = [{ id: currentUser.username, role: currentUser.role }];
       }
 
       let counts = { Hadir: 0, Terlambat: 0, Izin: 0, Sakit: 0, Alpa: 0 };
       const dayData = attendanceRecords[selectedDate] || {};
 
       list.forEach((person, index) => {
+        const accInfo = accounts[person.id] || { name: 'Tidak Dikenal', role: person.role };
         const record = dayData[person.id] || {};
         const currentStatus = record.status || ''; 
         const absenTime = record.time || '-';
@@ -608,6 +723,7 @@
             <button onclick="setStatus('${person.id}', 'Alpa')" class="status-btn px-3 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Alpa' ? 'active-alpa' : 'bg-white text-slate-600 hover:bg-slate-100'}">Alpa</button>
           `;
         } else {
+          let deleteBtnHTML = `<button onclick="removeTeacherFromSchedule('${person.id}')" title="Hapus dari jadwal hari ini" class="px-2.5 py-1.5 text-xs font-semibold rounded-md border bg-rose-50 hover:bg-rose-100 text-rose-600 transition"><i class="fa-solid fa-user-minus"></i></button>`;
           statusButtonsHTML = `
             <button onclick="setStatus('${person.id}', 'Hadir')" class="status-btn px-2.5 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Hadir' ? 'active-hadir' : 'bg-white text-slate-600 hover:bg-slate-100'}">Hadir</button>
             <button onclick="setStatus('${person.id}', 'Terlambat')" class="status-btn px-2.5 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Terlambat' ? 'active-terlambat' : 'bg-white text-slate-600 hover:bg-slate-100'}">Terlambat</button>
@@ -615,13 +731,14 @@
             <button onclick="setStatus('${person.id}', 'Sakit')" class="status-btn px-2.5 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Sakit' ? 'active-sakit' : 'bg-white text-slate-600 hover:bg-slate-100'}">Sakit</button>
             <button onclick="setStatus('${person.id}', 'Alpa')" class="status-btn px-2.5 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Alpa' ? 'active-alpa' : 'bg-white text-slate-600 hover:bg-slate-100'}">Alpa</button>
             <button onclick="resetAttendance('${person.id}')" title="Reset Status ke Netral" class="px-2.5 py-1.5 text-xs font-semibold rounded-md border bg-slate-200 hover:bg-slate-300 text-slate-700 transition"><i class="fa-solid fa-rotate-left"></i></button>
+            ${deleteBtnHTML}
           `;
         }
 
         tr.innerHTML = `
           <td class="p-4 text-center font-medium text-slate-400">${index + 1}</td>
-          <td class="p-4 font-semibold text-slate-800">${person.name}</td>
-          <td class="p-4"><span class="px-2.5 py-1 text-xs rounded-md bg-slate-100 text-slate-600 border border-slate-200 font-medium">${person.role}</span></td>
+          <td class="p-4 font-semibold text-slate-800">${accInfo.name}</td>
+          <td class="p-4"><span class="px-2.5 py-1 text-xs rounded-md bg-slate-100 text-slate-600 border border-slate-200 font-medium">${accInfo.role}</span></td>
           <td class="p-4 text-center">
             <div class="inline-flex rounded-lg shadow-sm border border-slate-200 bg-slate-50 p-1 space-x-1">
               ${statusButtonsHTML}
@@ -643,6 +760,8 @@
         document.getElementById('stat-alpa').innerText = `Alpa: ${counts.Alpa}`;
       }
     }
+
+    let globalTeacherMapForDetail = {};
 
     function renderRekapBulananTable() {
       if (currentUser.role !== 'KEPSEK') return;
@@ -676,14 +795,14 @@
             if (dObj.getDay() === 0) return; 
 
             const dayRecords = attendanceRecords[tgl];
-            const dayOfWeekMap = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
-            const dayName = dayOfWeekMap[dObj.getDay()] || "SENIN";
 
             Object.keys(accounts).forEach(username => {
               const record = dayRecords[username] || {};
               const st = record.status || 'Alpa';
 
               if (uniqueTeachersMap[username]) {
+                const dayOfWeekMap = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
+                const dayName = dayOfWeekMap[dObj.getDay()] || "SENIN";
                 const formattedDateStr = dObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
                 const detailObj = { date: tgl, formattedDate: formattedDateStr, dayName: dayName, personId: username };
 
@@ -811,13 +930,15 @@
         tr.innerHTML = `
           <td class="p-4 text-center text-slate-400">${idx++}</td>
           <td class="p-4 font-mono font-bold text-indigo-900">${username}</td>
-          <td class="p-4 font-semibold text-slate-800">${acc.name}</td>
+          <td class="p-4">
+            <input type="text" id="name-${username}" value="${acc.name}" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded focus:outline-none focus:border-indigo-600 font-semibold uppercase">
+          </td>
           <td class="p-4"><span class="px-2 py-1 text-xs rounded bg-slate-100 text-slate-600 font-semibold">${acc.role}</span></td>
           <td class="p-4">
             <input type="text" id="pass-${username}" value="${acc.pass}" class="px-3 py-1 text-xs border border-slate-300 rounded focus:outline-none focus:border-indigo-600 font-mono">
           </td>
           <td class="p-4 text-center space-x-1">
-            <button onclick="updateAccountPassword('${username}')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded font-medium shadow-sm transition">
+            <button onclick="updateAccountDetails('${username}')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded font-medium shadow-sm transition">
               Simpan
             </button>
             ${username !== 'kepsek' ? `<button onclick="deleteAccount('${username}')" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs rounded font-medium shadow-sm transition"><i class="fa-solid fa-trash"></i></button>` : ''}
@@ -846,6 +967,7 @@
       accounts[u] = { pass: pass, role: role, name: name };
       saveAccountsData();
       renderManageAccountsTable();
+      populateTeacherSelectDropdown();
 
       document.getElementById('new-acc-user').value = '';
       document.getElementById('new-acc-name').value = '';
@@ -863,20 +985,30 @@
         delete accounts[username];
         saveAccountsData();
         renderManageAccountsTable();
+        populateTeacherSelectDropdown();
         alert("Akun berhasil dihapus.");
       }
     }
 
-    function updateAccountPassword(username) {
+    function updateAccountDetails(username) {
       if (currentUser.role !== 'KEPSEK') return;
+      const newName = document.getElementById(`name-${username}`).value.trim().toUpperCase();
       const newPass = document.getElementById(`pass-${username}`).value.trim();
-      if (!newPass) {
-        alert("Password tidak boleh kosong!");
+      
+      if (!newName || !newPass) {
+        alert("Nama dan Password tidak boleh kosong!");
         return;
       }
+
+      accounts[username].name = newName;
       accounts[username].pass = newPass;
       saveAccountsData();
-      alert(`Password untuk akun "${username}" berhasil diperbarui!`);
+      renderManageAccountsTable();
+      populateTeacherSelectDropdown();
+      if (currentDay !== 'REKAP_BULAN' && currentDay !== 'MANAGE_ACCOUNTS') {
+        renderAttendanceTable();
+      }
+      alert(`Data akun "${username}" berhasil diperbarui!`);
     }
 
     function switchDay(day) {
@@ -936,18 +1068,25 @@
       }
     }
 
+    function saveScheduleData() {
+      if (db) {
+        db.ref('schedule_config').set(scheduleData);
+      } else {
+        localStorage.setItem('sma_azmanawadi_schedule', JSON.stringify(scheduleData));
+      }
+    }
+
     function loadFromLocalStorage() {
       const data = localStorage.getItem('sma_azmanawadi_absensi_date');
-      if (data) {
-        attendanceRecords = JSON.parse(data);
-      }
+      if (data) attendanceRecords = JSON.parse(data);
+
+      const schData = localStorage.getItem('sma_azmanawadi_schedule');
+      if (schData) scheduleData = JSON.parse(schData);
     }
 
     function loadAccountsFromStorage() {
       const data = localStorage.getItem('sma_azmanawadi_accounts');
-      if (data) {
-        accounts = JSON.parse(data);
-      }
+      if (data) accounts = JSON.parse(data);
     }
 
     function downloadMonthlyCSV() {
