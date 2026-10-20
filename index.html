@@ -31,12 +31,12 @@
     <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 md:p-10 space-y-6 border border-slate-200">
       <div class="text-center space-y-3">
         <div class="inline-flex p-4 bg-indigo-50 text-indigo-900 rounded-2xl shadow-sm">
-          <i class="fa-solid fa-lock text-4xl"></i>
+          <i class="fa-solid fa-location-dot text-4xl"></i>
         </div>
         <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900">Login Aplikasi Absensi</h2>
         <p class="text-xs md:text-sm text-slate-500">Silakan masukkan username dan password Anda untuk masuk.</p>
-        <div id="wifi-check-status" class="text-xs font-semibold text-indigo-600 bg-indigo-50 py-1.5 px-3 rounded-lg border border-indigo-100">
-          <i class="fa-solid fa-wifi mr-1"></i> Memeriksa jaringan Wi-Fi sekolah...
+        <div id="gps-check-status" class="text-xs font-semibold text-indigo-600 bg-indigo-50 py-1.5 px-3 rounded-lg border border-indigo-100">
+          <i class="fa-solid fa-spinner fa-spin mr-1"></i> Memeriksa lokasi GPS Anda...
         </div>
       </div>
 
@@ -443,35 +443,62 @@
     };
 
     let currentUser = null;
-    let currentClientIP = "";
-    
-    // ========================================================
-    // MASUKKAN IP PUBLIK WIFI SEKOLAH DI DALAM TANDA KUTIP DI BAWAH INI
-    // Contoh: const SCHOOL_WIFI_IP = "180.254.115.89";
-    // ========================================================
-    const SCHOOL_WIFI_IP = "114.10.39.68"; 
+    let userLocation = null; 
+    let userDistanceInMeters = null;
 
-    // Fungsi otomatis mendeteksi IP perangkat saat membuka halaman login
-    async function checkClientIP() {
-      try {
-        const response = await fetch('https://api.ipify.org?format=json');
-        const data = await response.json();
-        currentClientIP = data.ip;
-        
-        const wifiStatusEl = document.getElementById('wifi-check-status');
-        if (SCHOOL_WIFI_IP === "MASUKKAN_IP_PUBLIK_SEKOLAH_DISINI") {
-          wifiStatusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1 text-amber-500"></i> IP Sekolah belum diatur di kode. IP Anda saat ini: <b>${currentClientIP}</b>`;
-          wifiStatusEl.className = "text-xs font-semibold text-amber-600 bg-amber-50 py-1.5 px-3 rounded-lg border border-amber-200";
-        } else if (currentClientIP === SCHOOL_WIFI_IP) {
-          wifiStatusEl.innerHTML = `<i class="fa-solid fa-circle-check mr-1 text-emerald-600"></i> Terhubung ke Wi-Fi SMA Azmanawadi Kotaraja`;
-          wifiStatusEl.className = "text-xs font-semibold text-emerald-600 bg-emerald-50 py-1.5 px-3 rounded-lg border border-emerald-200";
-        } else {
-          wifiStatusEl.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1 text-rose-600"></i> Di luar Wi-Fi Sekolah (IP Anda: ${currentClientIP})`;
-          wifiStatusEl.className = "text-xs font-semibold text-rose-600 bg-rose-50 py-1.5 px-3 rounded-lg border border-rose-200";
-        }
-      } catch (e) {
-        document.getElementById('wifi-check-status').innerText = "Gagal mendeteksi koneksi jaringan internet.";
+    // ========================================================
+    // KOORDINAT LOKASI SEKOLAH & RADIUS (METER) - SMA AZMANAWADI KOTARAJA
+    // ========================================================
+    const SCHOOL_LAT = -8.518551848078557; 
+    const SCHOOL_LNG = 116.42211909999999; 
+    const MAX_ALLOWED_DISTANCE_METERS = 100; 
+
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371e3; 
+      const φ1 = lat1 * Math.PI / 180;
+      const φ2 = lat2 * Math.PI / 180;
+      const Δφ = (lat2 - lat1) * Math.PI / 180;
+      const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+      const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+      return Math.round(R * c); 
+    }
+
+    function checkClientGPS() {
+      const gpsStatusEl = document.getElementById('gps-check-status');
+
+      if (!navigator.geolocation) {
+        gpsStatusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1 text-rose-500"></i> Perangkat tidak mendukung fitur Geolocation/GPS.`;
+        gpsStatusEl.className = "text-xs font-semibold text-rose-600 bg-rose-50 py-1.5 px-3 rounded-lg border border-rose-200";
+        return;
       }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          userLocation = { lat, lng };
+
+          userDistanceInMeters = calculateDistance(lat, lng, SCHOOL_LAT, SCHOOL_LNG);
+
+          if (userDistanceInMeters <= MAX_ALLOWED_DISTANCE_METERS) {
+            gpsStatusEl.innerHTML = `<i class="fa-solid fa-circle-check mr-1 text-emerald-600"></i> Dalam Radius Sekolah (${userDistanceInMeters} meter)`;
+            gpsStatusEl.className = "text-xs font-semibold text-emerald-600 bg-emerald-50 py-1.5 px-3 rounded-lg border border-emerald-200";
+          } else {
+            gpsStatusEl.innerHTML = `<i class="fa-solid fa-circle-info mr-1 text-blue-600"></i> Di luar radius (${userDistanceInMeters}m). Izin/Sakit bebas dari mana saja, Absen Hadir wajib dalam 100m.`;
+            gpsStatusEl.className = "text-xs font-semibold text-blue-600 bg-blue-50 py-1.5 px-3 rounded-lg border border-blue-200";
+          }
+        },
+        (error) => {
+          gpsStatusEl.innerHTML = `<i class="fa-solid fa-location-crosshairs mr-1 text-amber-600"></i> Harap aktifkan izin lokasi/GPS pada browser HP Anda.`;
+          gpsStatusEl.className = "text-xs font-semibold text-amber-600 bg-amber-50 py-1.5 px-3 rounded-lg border border-amber-200";
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
     }
 
     function processLogin() {
@@ -483,17 +510,6 @@
         errEl.innerText = "Username atau password salah!";
         errEl.classList.remove('hidden');
         return;
-      }
-
-      const role = accounts[u].role;
-      
-      // Validasi pembatasan: Akun selain KEPSEK (Guru/Staf/BK) wajib terhubung dari Wi-Fi sekolah
-      if (role !== 'KEPSEK') {
-        if (SCHOOL_WIFI_IP !== "MASUKKAN_IP_PUBLIK_SEKOLAH_DISINI" && currentClientIP !== SCHOOL_WIFI_IP) {
-          errEl.innerText = "Akses ditolak! Akun Guru/Staf/BK hanya bisa login dari Wi-Fi SMA Azmanawadi Kotaraja.";
-          errEl.classList.remove('hidden');
-          return;
-        }
       }
 
       currentUser = { username: u, ...accounts[u] };
@@ -510,7 +526,7 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       loadAccountsFromStorage();
-      checkClientIP();
+      checkClientGPS();
       
       const loginUserEl = document.getElementById('login-user');
       const loginPassEl = document.getElementById('login-pass');
@@ -657,6 +673,7 @@
         document.getElementById('guru-nav').classList.add('hidden');
         document.getElementById('manage-schedule-container').classList.remove('hidden');
         populateTeacherSelectDropdown();
+        renderAccountsTable();
       }
 
       if (db) {
@@ -668,7 +685,13 @@
         });
         db.ref('accounts_config').on('value', (snapshot) => {
           const serverAcc = snapshot.val();
-          if (serverAcc) accounts = serverAcc;
+          if (serverAcc) {
+            accounts = serverAcc;
+            if (currentUser.role === 'KEPSEK') {
+              populateTeacherSelectDropdown();
+              renderAccountsTable();
+            }
+          }
         });
         db.ref('schedule_config').on('value', (snapshot) => {
           const serverSch = snapshot.val();
@@ -792,7 +815,9 @@
         document.getElementById('manage-schedule-title').innerText = `Kelola Tugas Guru Harian (${currentDay})`;
         if (currentDay === 'REKAP_BULAN') {
           renderRekapBulananTable();
-        } else if (currentDay !== 'MANAGE_ACCOUNTS') {
+        } else if (currentDay === 'MANAGE_ACCOUNTS') {
+          renderAccountsTable();
+        } else {
           renderAttendanceTable();
         }
       } else {
@@ -801,6 +826,18 @@
     }
 
     function setStatus(personId, status) {
+      // Validasi Radius khusus untuk Absen Hadir / Terlambat bagi akun selain KEPSEK
+      if (currentUser.role !== 'KEPSEK' && (status === 'Hadir' || status === 'Terlambat')) {
+        if (!userLocation) {
+          alert("Gagal mencatat! Mohon aktifkan GPS/Lokasi perangkat Anda terlebih dahulu untuk absen Hadir/Terlambat.");
+          return;
+        }
+        if (userDistanceInMeters > MAX_ALLOWED_DISTANCE_METERS) {
+          alert(`Anda berada di luar radius sekolah (${userDistanceInMeters}m dari titik lokasi). Jarak maksimal untuk absen Hadir/Terlambat adalah ${MAX_ALLOWED_DISTANCE_METERS} meter.\n\nCatatan: Untuk status Izin atau Sakit bisa dilakukan dari mana saja.`);
+          return;
+        }
+      }
+
       if (!attendanceRecords[selectedDate]) attendanceRecords[selectedDate] = {};
       if (!attendanceRecords[selectedDate][personId]) attendanceRecords[selectedDate][personId] = {};
 
@@ -816,11 +853,17 @@
       }
       
       saveData();
-      renderAttendanceTable();
+      if (currentUser.role === 'KEPSEK') {
+        if (currentDay === 'REKAP_BULAN') renderRekapBulananTable();
+        else renderAttendanceTable();
+      } else {
+        renderAttendanceTable();
+        renderGuruHistoryTable();
+      }
     }
 
     function resetAttendance(personId) {
-      if (currentUser.username !== 'kepsek') return;
+      if (currentUser.role !== 'KEPSEK') return;
       if (!attendanceRecords[selectedDate]) attendanceRecords[selectedDate] = {};
       if (!attendanceRecords[selectedDate][personId]) attendanceRecords[selectedDate][personId] = {};
 
@@ -831,8 +874,8 @@
     }
 
     function removeTeacherFromSchedule(personId) {
-      if (currentUser.username !== 'kepsek') return;
-      if (currentDay === "MINGGU" || currentDay === "REKAP_BULAN" || currentDay === "MANAGE_ACCOUNTS") return;
+      if (currentUser.role !== 'KEPSEK') return;
+      if (["MINGGU", "REKAP_BULAN", "MANAGE_ACCOUNTS"].includes(currentDay)) return;
 
       if (!scheduleData[currentDay]) return;
 
@@ -845,8 +888,8 @@
     }
 
     function addTeacherToCurrentDaySchedule() {
-      if (currentUser.username !== 'kepsek') return;
-      if (currentDay === "MINGGU" || currentDay === "REKAP_BULAN" || currentDay === "MANAGE_ACCOUNTS") {
+      if (currentUser.role !== 'KEPSEK') return;
+      if (["MINGGU", "REKAP_BULAN", "MANAGE_ACCOUNTS"].includes(currentDay)) {
         alert("Pilih hari aktif (Senin - Sabtu) terlebih dahulu!");
         return;
       }
@@ -888,25 +931,23 @@
     }
 
     function resetMonthlyAttendance() {
-      if (currentUser.username !== 'kepsek') return;
+      if (currentUser.role !== 'KEPSEK') return;
       const bulanVal = document.getElementById('select-bulan').value;
       if (!bulanVal) {
         alert("Silakan pilih bulan terlebih dahulu!");
         return;
       }
 
-      if (confirm(`Apakah Anda yakin ingin mereset seluruh status absensi pada bulan ${bulanVal}? Semua data kehadiran akan dikosongkan total.`)) {
+      if (confirm(`Apakah Anda yakin ingin mereset seluruh status absensi pada bulan ${bulanVal}? Semua data kehadiran dan alpa akan dikosongkan total.`)) {
         Object.keys(attendanceRecords).forEach(tgl => {
           if (tgl.startsWith(bulanVal)) {
-            Object.keys(attendanceRecords[tgl]).forEach(personId => {
-              attendanceRecords[tgl][personId].status = '';
-              attendanceRecords[tgl][personId].time = '-';
-            });
+            // Hapus/Hapus total entri tanggal di bulan tersebut agar tidak dihitung sebagai Alpa otomatis
+            delete attendanceRecords[tgl];
           }
         });
         saveData();
         renderRekapBulananTable();
-        alert("Semua data absensi pada bulan tersebut berhasil direset menjadi 0!");
+        alert("Semua data absensi dan rekap bulanan berhasil direset menjadi 0!");
       }
     }
 
@@ -918,6 +959,48 @@
       saveData();
     }
 
+    function switchDay(day) {
+      currentDay = day;
+      renderDayTabs();
+
+      const attSec = document.getElementById('attendance-section');
+      const rekapSec = document.getElementById('rekap-bulan-section');
+      const accSec = document.getElementById('manage-accounts-section');
+
+      attSec.classList.add('hidden');
+      rekapSec.classList.add('hidden');
+      accSec.classList.add('hidden');
+
+      if (day === 'REKAP_BULAN') {
+        rekapSec.classList.remove('hidden');
+        renderRekapBulananTable();
+      } else if (day === 'MANAGE_ACCOUNTS') {
+        accSec.classList.remove('hidden');
+        renderAccountsTable();
+      } else {
+        attSec.classList.remove('hidden');
+        document.getElementById('manage-schedule-title').innerText = `Kelola Tugas Guru Harian (${day})`;
+        document.getElementById('selected-day-title').innerText = `HARI ${day}`;
+        renderAttendanceTable();
+      }
+    }
+
+    function renderDayTabs() {
+      const tabs = document.querySelectorAll('.day-tab');
+      tabs.forEach(tab => {
+        tab.className = "day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition";
+        if (tab.getAttribute('onclick').includes(currentDay)) {
+          if (currentDay === 'REKAP_BULAN') {
+            tab.className = "day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-emerald-600 text-white transition";
+          } else if (currentDay === 'MANAGE_ACCOUNTS') {
+            tab.className = "day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white transition";
+          } else {
+            tab.className = "day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition";
+          }
+        }
+      });
+    }
+
     function renderAttendanceTable() {
       const tbody = document.getElementById('attendance-body');
       tbody.innerHTML = '';
@@ -927,7 +1010,7 @@
 
       const manageScheduleEl = document.getElementById('manage-schedule-container');
       if (currentUser.role === 'KEPSEK') {
-        if (currentDay === "MINGGU" || currentDay === "REKAP_BULAN" || currentDay === "MANAGE_ACCOUNTS") {
+        if (["MINGGU", "REKAP_BULAN", "MANAGE_ACCOUNTS"].includes(currentDay)) {
           manageScheduleEl.classList.add('hidden');
         } else {
           manageScheduleEl.classList.remove('hidden');
@@ -958,62 +1041,9 @@
         if (counts[effectiveStatus] !== undefined) counts[effectiveStatus]++;
 
         const matchSearch = accInfo.name.toLowerCase().includes(searchVal) || accInfo.role.toLowerCase().includes(searchVal);
-        const matchStatus = filterStatus === 'ALL' || effectiveStatus === filterStatus;
+        const matchFilter = filterStatus === 'ALL' || effectiveStatus === filterStatus;
 
-        return matchSearch && matchStatus;
-      });
-
-      if (filteredList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 font-medium">Tidak ada data guru yang sesuai dengan kriteria filter.</td></tr>`;
-      }
-
-      filteredList.forEach((person, index) => {
-        const accInfo = accounts[person.id] || { name: 'Tidak Dikenal', role: person.role };
-        const record = dayData[person.id] || {};
-        const currentStatus = record.status || ''; 
-        const absenTime = record.time || '-';
-        const note = record.note || '';
-
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50 border-b border-slate-100 transition";
-
-        let statusButtonsHTML = '';
-        if (currentUser.role !== 'KEPSEK') {
-          statusButtonsHTML = `
-            <button onclick="setStatus('${person.id}', 'Hadir')" class="status-btn px-3 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Hadir' ? 'active-hadir' : 'bg-white text-slate-600 hover:bg-slate-100'}">Hadir</button>
-            <button onclick="setStatus('${person.id}', 'Izin')" class="status-btn px-3 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Izin' ? 'active-izin' : 'bg-white text-slate-600 hover:bg-slate-100'}">Izin</button>
-            <button onclick="setStatus('${person.id}', 'Sakit')" class="status-btn px-3 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Sakit' ? 'active-sakit' : 'bg-white text-slate-600 hover:bg-slate-100'}">Sakit</button>
-            <button onclick="setStatus('${person.id}', 'Alpa')" class="status-btn px-3 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Alpa' ? 'active-alpa' : 'bg-white text-slate-600 hover:bg-slate-100'}">Alpa</button>
-          `;
-        } else {
-          let deleteBtnHTML = `<button onclick="removeTeacherFromSchedule('${person.id}')" title="Hapus dari jadwal hari ini" class="px-2.5 py-1.5 text-xs font-semibold rounded-md border bg-rose-50 hover:bg-rose-100 text-rose-600 transition"><i class="fa-solid fa-user-minus"></i></button>`;
-          let resetBtnHTML = currentUser.username === 'kepsek' ? `<button onclick="resetAttendance('${person.id}')" title="Reset Status ke Netral" class="px-2.5 py-1.5 text-xs font-semibold rounded-md border bg-slate-200 hover:bg-slate-300 text-slate-700 transition"><i class="fa-solid fa-rotate-left"></i></button>` : '';
-          statusButtonsHTML = `
-            <button onclick="setStatus('${person.id}', 'Hadir')" class="status-btn px-2.5 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Hadir' ? 'active-hadir' : 'bg-white text-slate-600 hover:bg-slate-100'}">Hadir</button>
-            <button onclick="setStatus('${person.id}', 'Terlambat')" class="status-btn px-2.5 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Terlambat' ? 'active-terlambat' : 'bg-white text-slate-600 hover:bg-slate-100'}">Terlambat</button>
-            <button onclick="setStatus('${person.id}', 'Izin')" class="status-btn px-2.5 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Izin' ? 'active-izin' : 'bg-white text-slate-600 hover:bg-slate-100'}">Izin</button>
-            <button onclick="setStatus('${person.id}', 'Sakit')" class="status-btn px-2.5 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Sakit' ? 'active-sakit' : 'bg-white text-slate-600 hover:bg-slate-100'}">Sakit</button>
-            <button onclick="setStatus('${person.id}', 'Alpa')" class="status-btn px-2.5 py-1.5 text-xs font-semibold rounded-md border transition ${currentStatus === 'Alpa' ? 'active-alpa' : 'bg-white text-slate-600 hover:bg-slate-100'}">Alpa</button>
-            ${resetBtnHTML}
-            ${deleteBtnHTML}
-          `;
-        }
-
-        tr.innerHTML = `
-          <td class="p-4 text-center font-medium text-slate-400">${index + 1}</td>
-          <td class="p-4 font-semibold text-slate-800">${accInfo.name}</td>
-          <td class="p-4"><span class="px-2.5 py-1 text-xs rounded-md bg-slate-100 text-slate-600 border border-slate-200 font-medium">${accInfo.role}</span></td>
-          <td class="p-4 text-center">
-            <div class="inline-flex rounded-lg shadow-sm border border-slate-200 bg-slate-50 p-1 space-x-1">
-              ${statusButtonsHTML}
-            </div>
-          </td>
-          <td class="p-4 text-center font-mono text-xs font-bold text-indigo-600">${absenTime}</td>
-          <td class="p-4">
-            <input type="text" value="${note}" onchange="setNote('${person.id}', this.value)" placeholder="Catatan/Alasan..." class="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 bg-white">
-          </td>
-        `;
-        tbody.appendChild(tr);
+        return matchSearch && matchFilter;
       });
 
       if (currentUser.role === 'KEPSEK') {
@@ -1023,266 +1053,210 @@
         document.getElementById('stat-sakit').innerText = `Sakit: ${counts.Sakit}`;
         document.getElementById('stat-alpa').innerText = `Alpa: ${counts.Alpa}`;
       }
+
+      if (filteredList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400 font-medium">Tidak ada data guru yang sesuai.</td></tr>`;
+        return;
+      }
+
+      filteredList.forEach((person, index) => {
+        const accInfo = accounts[person.id] || { name: 'Tidak Dikenal', role: person.role };
+        const record = dayData[person.id] || { status: '', time: '-', note: '' };
+        const activeSt = record.status || '';
+        const timeVal = record.time || '-';
+        const noteVal = record.note || '';
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+
+        let actionsHtml = `
+          <div class="flex justify-center items-center gap-1.5 flex-wrap">
+            <button onclick="setStatus('${person.id}', 'Hadir')" class="status-btn px-2.5 py-1 text-xs rounded-lg border font-semibold ${activeSt === 'Hadir' ? 'active-hadir' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">Hadir</button>
+            <button onclick="setStatus('${person.id}', 'Terlambat')" class="status-btn px-2.5 py-1 text-xs rounded-lg border font-semibold ${activeSt === 'Terlambat' ? 'active-terlambat' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">Terlambat</button>
+            <button onclick="setStatus('${person.id}', 'Izin')" class="status-btn px-2.5 py-1 text-xs rounded-lg border font-semibold ${activeSt === 'Izin' ? 'active-izin' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">Izin</button>
+            <button onclick="setStatus('${person.id}', 'Sakit')" class="status-btn px-2.5 py-1 text-xs rounded-lg border font-semibold ${activeSt === 'Sakit' ? 'active-sakit' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">Sakit</button>
+            <button onclick="setStatus('${person.id}', 'Alpa')" class="status-btn px-2.5 py-1 text-xs rounded-lg border font-semibold ${activeSt === 'Alpa' ? 'active-alpa' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">Alpa</button>
+        `;
+
+        if (currentUser.role === 'KEPSEK') {
+          actionsHtml += `
+            <button onclick="resetAttendance('${person.id}')" title="Reset Status" class="p-1 text-slate-400 hover:text-rose-600 ml-1"><i class="fa-solid fa-rotate-left"></i></button>
+            <button onclick="removeTeacherFromSchedule('${person.id}')" title="Hapus dari jadwal hari ini" class="p-1 text-slate-400 hover:text-rose-600 ml-1"><i class="fa-solid fa-trash"></i></button>
+          `;
+        }
+        actionsHtml += `</div>`;
+
+        tr.innerHTML = `
+          <td class="p-4 text-center font-semibold text-slate-500">${index + 1}</td>
+          <td class="p-4 font-bold text-slate-800">${accInfo.name}</td>
+          <td class="p-4 font-medium text-slate-600">${accInfo.role}</td>
+          <td class="p-4 text-center">${actionsHtml}</td>
+          <td class="p-4 text-center font-mono text-xs text-slate-500">${timeVal}</td>
+          <td class="p-4">
+            <input type="text" value="${noteVal}" onchange="setNote('${person.id}', this.value)" placeholder="Tulis catatan..." class="w-full px-2.5 py-1 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-600 bg-slate-50">
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
     function renderGuruHistoryTable() {
-      if (!currentUser) return;
       const tbody = document.getElementById('guru-history-body');
       if (!tbody) return;
       tbody.innerHTML = '';
 
-      const startDate = document.getElementById('guru-history-start').value;
-      const endDate = document.getElementById('guru-history-end').value;
-      const filterStatus = document.getElementById('guru-history-status').value;
+      const start = document.getElementById('guru-history-start').value;
+      const end = document.getElementById('guru-history-end').value;
+      const statusFilter = document.getElementById('guru-history-status').value;
 
-      const dayOfWeekMap = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
-      let historyItems = [];
+      if (!start || !end) return;
 
-      Object.keys(attendanceRecords).sort().reverse().forEach(tgl => {
-        if (startDate && tgl < startDate) return;
-        if (endDate && tgl > endDate) return;
+      let currentDate = new Date(start + "T00:00:00");
+      const endDate = new Date(end + "T00:00:00");
+      let rowsHtml = '';
+      let no = 1;
 
-        const record = attendanceRecords[tgl][currentUser.username];
-        if (record && record.status) {
-          if (filterStatus !== 'ALL' && record.status !== filterStatus) return;
+      const daysMap = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
 
-          const dObj = new Date(tgl + "T00:00:00");
-          const dayName = dayOfWeekMap[dObj.getDay()] || "SENIN";
-          const formattedDate = dObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      while (currentDate <= endDate) {
+        const tglStr = currentDate.toISOString().split('T')[0];
+        const dayName = daysMap[currentDate.getDay()];
 
-          historyItems.push({
-            date: tgl,
-            formattedDate: formattedDate,
-            dayName: dayName,
-            status: record.status,
-            time: record.time || '-',
-            note: record.note || '-'
-          });
+        if (dayName !== "MINGGU") {
+          const dayData = attendanceRecords[tglStr] || {};
+          const record = dayData[currentUser.username] || { status: '', time: '-', note: '' };
+          const st = record.status || 'Alpa';
+
+          if (statusFilter === 'ALL' || st === statusFilter) {
+            let badgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
+            if (st === 'Hadir') badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+            else if (st === 'Terlambat') badgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+            else if (st === 'Izin') badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
+            else if (st === 'Sakit') badgeClass = 'bg-purple-50 text-purple-700 border-purple-200';
+
+            const formattedDate = currentDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+
+            rowsHtml += `
+              <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                <td class="p-4 text-center font-semibold text-slate-500">${no++}</td>
+                <td class="p-4 font-semibold text-slate-800">${formattedDate}</td>
+                <td class="p-4 text-slate-600">${dayName}</td>
+                <td class="p-4 text-center">
+                  <span class="px-3 py-1 rounded-full text-xs font-bold border ${badgeClass}">${st}</span>
+                </td>
+                <td class="p-4 text-center font-mono text-xs text-slate-500">${record.time || '-'}</td>
+                <td class="p-4 text-slate-600 text-xs">${record.note || '-'}</td>
+              </tr>
+            `;
+          }
         }
-      });
-
-      if (historyItems.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 font-medium">Tidak ada riwayat absensi pada rentang tanggal tersebut.</td></tr>`;
-        return;
+        currentDate.setDate(currentDate.getDate() + 1);
       }
 
-      historyItems.forEach((item, index) => {
-        let badgeClass = "bg-slate-100 text-slate-700 border-slate-200";
-        if (item.status === 'Hadir') badgeClass = "bg-emerald-100 text-emerald-800 border-emerald-300";
-        else if (item.status === 'Terlambat') badgeClass = "bg-amber-100 text-amber-800 border-amber-300";
-        else if (item.status === 'Izin') badgeClass = "bg-blue-100 text-blue-800 border-blue-300";
-        else if (item.status === 'Sakit') badgeClass = "bg-purple-100 text-purple-800 border-purple-300";
-        else if (item.status === 'Alpa') badgeClass = "bg-rose-100 text-rose-800 border-rose-300";
-
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50 border-b border-slate-100 transition";
-        tr.innerHTML = `
-          <td class="p-4 text-center font-medium text-slate-400">${index + 1}</td>
-          <td class="p-4 font-semibold text-slate-800">${item.formattedDate}</td>
-          <td class="p-4 font-medium text-indigo-900">${item.dayName}</td>
-          <td class="p-4 text-center">
-            <span class="px-3 py-1 text-xs font-bold rounded-full border ${badgeClass}">${item.status}</span>
-          </td>
-          <td class="p-4 text-center font-mono text-xs font-bold text-indigo-600">${item.time}</td>
-          <td class="p-4 text-xs text-slate-600">${item.note}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+      if (rowsHtml === '') {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400 font-medium">Tidak ada riwayat absensi pada rentang tanggal tersebut.</td></tr>`;
+      } else {
+        tbody.innerHTML = rowsHtml;
+      }
     }
 
-    let globalTeacherMapForDetail = {};
-
     function renderRekapBulananTable() {
-      if (currentUser.role !== 'KEPSEK') return;
       const tbody = document.getElementById('rekap-bulan-body');
+      if (!tbody) return;
       tbody.innerHTML = '';
 
       const bulanVal = document.getElementById('select-bulan').value;
-      document.getElementById('print-info-rekap-bulan').innerText = bulanVal ? `Bulan: ${bulanVal}` : '-';
+      if (!bulanVal) return;
 
-      let uniqueTeachersMap = {};
+      let no = 1;
+      let rowsHtml = '';
 
       Object.keys(accounts).forEach(username => {
         const acc = accounts[username];
-        uniqueTeachersMap[username] = {
-          username: username,
-          name: acc.name,
-          role: acc.role,
-          hadir: 0,
-          terlambat: 0,
-          izin: 0,
-          sakit: 0,
-          alpa: 0,
-          recordsDetail: { Hadir: [], Terlambat: [], Izin: [], Sakit: [], Alpa: [] }
-        };
-      });
+        let cHadir = 0, cTerlambat = 0, cIzin = 0, cSakit = 0, cAlpa = 0;
 
-      if (bulanVal) {
-        const dayOfWeekMap = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
-        
-        const [year, month] = bulanVal.split('-').map(Number);
-        const daysInMonth = new Date(year, month, 0).getDate();
-        const todayStr = new Date().toISOString().split('T')[0];
-
-        for (let day = 1; day <= daysInMonth; day++) {
-          const dayStr = String(day).padStart(2, '0');
-          const tgl = `${bulanVal}-${dayStr}`;
-
-          if (tgl > todayStr) break;
-
-          const dObj = new Date(tgl + "T00:00:00");
-          const dayIndex = dObj.getDay();
-
-          if (dayIndex === 0) continue; 
-
-          const dayName = dayOfWeekMap[dayIndex];
-          const scheduledList = scheduleData[dayName] || [];
-          const dayRecords = attendanceRecords[tgl] || {};
-          const formattedDateStr = dObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-
-          scheduledList.forEach(person => {
-            const username = person.id;
-            if (!uniqueTeachersMap[username]) return;
-
-            const record = dayRecords[username] || {};
-            const st = record.status || '';
-            const detailObj = { date: tgl, formattedDate: formattedDateStr, dayName: dayName, personId: username };
-
-            if (st === 'Hadir') {
-              uniqueTeachersMap[username].hadir++;
-              uniqueTeachersMap[username].recordsDetail.Hadir.push(detailObj);
-            } else if (st === 'Terlambat') {
-              uniqueTeachersMap[username].terlambat++;
-              uniqueTeachersMap[username].recordsDetail.Terlambat.push(detailObj);
-            } else if (st === 'Izin') {
-              uniqueTeachersMap[username].izin++;
-              uniqueTeachersMap[username].recordsDetail.Izin.push(detailObj);
-            } else if (st === 'Sakit') {
-              uniqueTeachersMap[username].sakit++;
-              uniqueTeachersMap[username].recordsDetail.Sakit.push(detailObj);
-            } else if (st === 'Alpa') {
-              uniqueTeachersMap[username].alpa++;
-              uniqueTeachersMap[username].recordsDetail.Alpa.push(detailObj);
+        Object.keys(attendanceRecords).forEach(tgl => {
+          if (tgl.startsWith(bulanVal)) {
+            const dateObj = new Date(tgl + "T00:00:00");
+            if (dateObj.getDay() !== 0) { // Bukan Minggu
+              const rec = attendanceRecords[tgl][username] || {};
+              const st = rec.status || 'Alpa';
+              if (st === 'Hadir') cHadir++;
+              else if (st === 'Terlambat') cTerlambat++;
+              else if (st === 'Izin') cIzin++;
+              else if (st === 'Sakit') cSakit++;
+              else if (st === 'Alpa') cAlpa++;
             }
-          });
-        }
-      }
+          }
+        });
 
-      globalTeacherMapForDetail = uniqueTeachersMap;
-
-      const teachersList = Object.values(uniqueTeachersMap);
-      if (teachersList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">Tidak ada data rekap pada bulan ini.</td></tr>`;
-        return;
-      }
-
-      const isMainKepsek = currentUser.username === 'kepsek';
-
-      teachersList.forEach((teacher, index) => {
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50 border-b border-slate-100";
-        tr.innerHTML = `
-          <td class="p-4 text-center text-slate-400 font-medium">${index + 1}</td>
-          <td class="p-4 font-semibold text-slate-800">${teacher.name}<br><span class="text-xs font-normal text-slate-500">${teacher.role}</span></td>
-          <td class="p-4 text-center font-bold text-emerald-600 ${isMainKepsek ? 'cursor-pointer hover:underline' : ''}" ${isMainKepsek ? `onclick="openDetailModal('${teacher.username}', 'Hadir')"` : ''}>${teacher.hadir}</td>
-          <td class="p-4 text-center font-bold text-amber-600 ${isMainKepsek ? 'cursor-pointer hover:underline' : ''}" ${isMainKepsek ? `onclick="openDetailModal('${teacher.username}', 'Terlambat')"` : ''}>${teacher.terlambat}</td>
-          <td class="p-4 text-center font-bold text-blue-600 ${isMainKepsek ? 'cursor-pointer hover:underline' : ''}" ${isMainKepsek ? `onclick="openDetailModal('${teacher.username}', 'Izin')"` : ''}>${teacher.izin}</td>
-          <td class="p-4 text-center font-bold text-purple-600 ${isMainKepsek ? 'cursor-pointer hover:underline' : ''}" ${isMainKepsek ? `onclick="openDetailModal('${teacher.username}', 'Sakit')"` : ''}>${teacher.sakit}</td>
-          <td class="p-4 text-center font-bold text-rose-600 ${isMainKepsek ? 'cursor-pointer hover:underline' : ''}" ${isMainKepsek ? `onclick="openDetailModal('${teacher.username}', 'Alpa')"` : ''}>${teacher.alpa}</td>
-          <td class="p-4 text-center">
-            ${isMainKepsek ? `<button onclick="openFullTeacherHistory('${teacher.username}')" title="Cek Riwayat Lengkap" class="px-2.5 py-1 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-lg border border-indigo-200 transition"><i class="fa-solid fa-list-check mr-1"></i> Rincian</button>` : '<span class="text-xs text-slate-400">Khusus Kepsek</span>'}
-          </td>
+        rowsHtml += `
+          <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+            <td class="p-4 text-center font-semibold text-slate-500">${no++}</td>
+            <td class="p-4 font-bold text-slate-800">${acc.name}<br><span class="text-xs font-normal text-slate-500">${acc.role}</span></td>
+            <td class="p-4 text-center font-bold text-emerald-600">${cHadir}</td>
+            <td class="p-4 text-center font-bold text-amber-600">${cTerlambat}</td>
+            <td class="p-4 text-center font-bold text-blue-600">${cIzin}</td>
+            <td class="p-4 text-center font-bold text-purple-600">${cSakit}</td>
+            <td class="p-4 text-center font-bold text-rose-600">${cAlpa}</td>
+            <td class="p-4 text-center">
+              <button onclick="openDetailModalPerson('${username}', '${acc.name}')" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition">
+                <i class="fa-solid fa-eye mr-1"></i> Detail
+              </button>
+            </td>
+          </tr>
         `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function openFullTeacherHistory(username) {
-      if (currentUser.username !== 'kepsek') return;
-      const teacher = globalTeacherMapForDetail[username];
-      if (!teacher) return;
-
-      document.getElementById('detail-modal-title').innerText = `Riwayat Absensi Guru: ${teacher.name}`;
-      document.getElementById('detail-modal-subtitle').innerText = `Semua catatan kehadiran bulan (${bulanSelectedText()})`;
-
-      const tbody = document.getElementById('detail-modal-body');
-      tbody.innerHTML = '';
-
-      let allRecords = [];
-      Object.keys(teacher.recordsDetail).forEach(stKey => {
-        teacher.recordsDetail[stKey].forEach(item => {
-          allRecords.push({ ...item, status: stKey });
-        });
       });
 
-      allRecords.sort((a, b) => b.date.localeCompare(a.date));
-
-      if (allRecords.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">Belum ada riwayat pada bulan ini.</td></tr>`;
-      } else {
-        allRecords.forEach(item => {
-          const tr = document.createElement('tr');
-          tr.className = "border-b border-slate-100 hover:bg-slate-50";
-          tr.innerHTML = `
-            <td class="p-3 font-semibold text-slate-700">${item.formattedDate}</td>
-            <td class="p-3 text-slate-500">${item.dayName}</td>
-            <td class="p-3 font-bold text-indigo-600">${item.status}</td>
-            <td class="p-3 text-center space-x-1">
-              <select onchange="changeStatusFromModal('${item.date}', '${item.personId}', this.value)" class="px-2 py-1 text-xs border rounded bg-white font-medium text-slate-700 focus:outline-none">
-                <option value="">Ubah Status...</option>
-                <option value="Hadir">Hadir</option>
-                <option value="Terlambat">Terlambat</option>
-                <option value="Izin">Izin</option>
-                <option value="Sakit">Sakit</option>
-                <option value="Alpa">Alpa</option>
-              </select>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
-      }
-
-      document.getElementById('detail-modal').classList.remove('hidden');
+      tbody.innerHTML = rowsHtml;
+      document.getElementById('print-info-rekap-bulan').innerText = `Periode Bulan: ${bulanVal}`;
     }
 
-    function openDetailModal(username, statusType) {
-      if (currentUser.username !== 'kepsek') return;
-      const teacher = globalTeacherMapForDetail[username];
-      if (!teacher) return;
+    function openDetailModalPerson(username, name) {
+      const modal = document.getElementById('detail-modal');
+      const title = document.getElementById('detail-modal-title');
+      const subtitle = document.getElementById('detail-modal-subtitle');
+      const body = document.getElementById('detail-modal-body');
 
-      document.getElementById('detail-modal-title').innerText = `Rincian Status "${statusType}"`;
-      document.getElementById('detail-modal-subtitle').innerText = `Guru/Staf: ${teacher.name} (${bulanSelectedText()})`;
+      title.innerText = `Rincian Kehadiran: ${name}`;
+      subtitle.innerText = `Bulan: ${document.getElementById('select-bulan').value}`;
+      body.innerHTML = '';
 
-      const tbody = document.getElementById('detail-modal-body');
-      tbody.innerHTML = '';
+      const bulanVal = document.getElementById('select-bulan').value;
+      let rows = '';
 
-      const listDetail = teacher.recordsDetail[statusType] || [];
-      if (listDetail.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">Tidak ada catatan pada status ini.</td></tr>`;
-      } else {
-        listDetail.forEach(item => {
-          const tr = document.createElement('tr');
-          tr.className = "border-b border-slate-100 hover:bg-slate-50";
-          tr.innerHTML = `
-            <td class="p-3 font-semibold text-slate-700">${item.formattedDate}</td>
-            <td class="p-3 text-slate-500">${item.dayName}</td>
-            <td class="p-3 font-bold text-indigo-600">${statusType}</td>
-            <td class="p-3 text-center space-x-1">
-              <select onchange="changeStatusFromModal('${item.date}', '${item.personId}', this.value)" class="px-2 py-1 text-xs border rounded bg-white font-medium text-slate-700 focus:outline-none">
-                <option value="">Ubah Status...</option>
-                <option value="Hadir">Hadir</option>
-                <option value="Terlambat">Terlambat</option>
-                <option value="Izin">Izin</option>
-                <option value="Sakit">Sakit</option>
-                <option value="Alpa">Alpa</option>
-              </select>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
-      }
+      Object.keys(attendanceRecords).sort().forEach(tgl => {
+        if (tgl.startsWith(bulanVal)) {
+          const dateObj = new Date(tgl + "T00:00:00");
+          if (dateObj.getDay() !== 0) {
+            const rec = attendanceRecords[tgl][username] || {};
+            const st = rec.status || 'Alpa';
+            const daysMap = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
+            const dayName = daysMap[dateObj.getDay()];
 
-      document.getElementById('detail-modal').classList.remove('hidden');
+            rows += `
+              <tr class="border-b">
+                <td class="p-3 font-semibold">${tgl}</td>
+                <td class="p-3">${dayName}</td>
+                <td class="p-3 font-bold">${st}</td>
+                <td class="p-3 text-center">
+                  <select onchange="adminUpdateStatus('${tgl}', '${username}', this.value)" class="px-2 py-1 border rounded text-xs bg-white font-semibold">
+                    <option value="" disabled selected>Ubah Status...</option>
+                    <option value="Hadir">Hadir</option>
+                    <option value="Terlambat">Terlambat</option>
+                    <option value="Izin">Izin</option>
+                    <option value="Sakit">Sakit</option>
+                    <option value="Alpa">Alpa</option>
+                  </select>
+                </td>
+              </tr>
+            `;
+          }
+        }
+      });
+
+      body.innerHTML = rows || `<tr><td colspan="4" class="p-4 text-center text-slate-400">Belum ada data rincian.</td></tr>`;
+      modal.classList.remove('hidden');
     }
 
     function closeDetailModal() {
@@ -1290,55 +1264,43 @@
       renderRekapBulananTable();
     }
 
-    function changeStatusFromModal(dateStr, personId, newStatus) {
-      if (currentUser.username !== 'kepsek') return;
-      if (!newStatus) return;
-      if (!attendanceRecords[dateStr]) attendanceRecords[dateStr] = {};
-      if (!attendanceRecords[dateStr][personId]) attendanceRecords[dateStr][personId] = {};
+    function adminUpdateStatus(tgl, username, newStatus) {
+      if (!attendanceRecords[tgl]) attendanceRecords[tgl] = {};
+      if (!attendanceRecords[tgl][username]) attendanceRecords[tgl][username] = {};
 
       const currentTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-      attendanceRecords[dateStr][personId].status = newStatus;
-      attendanceRecords[dateStr][personId].time = currentTime;
-
+      attendanceRecords[tgl][username].status = newStatus;
+      attendanceRecords[tgl][username].time = currentTime;
       saveData();
-      alert("Status berhasil diperbarui secara manual!");
-      closeDetailModal();
+      alert("Status berhasil diperbarui!");
     }
 
-    function bulanSelectedText() {
-      const val = document.getElementById('select-bulan').value;
-      return val ? `Bulan: ${val}` : '';
-    }
-
-    function renderManageAccountsTable() {
-      if (currentUser.role !== 'KEPSEK') return;
+    function renderAccountsTable() {
       const tbody = document.getElementById('accounts-table-body');
+      if (!tbody) return;
       tbody.innerHTML = '';
 
-      let idx = 1;
+      let rows = '';
+      let no = 1;
+
       Object.keys(accounts).forEach(username => {
         const acc = accounts[username];
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50 border-b border-slate-100";
-        tr.innerHTML = `
-          <td class="p-4 text-center text-slate-400">${idx++}</td>
-          <td class="p-4 font-mono font-bold text-indigo-900">${username}</td>
-          <td class="p-4">
-            <input type="text" id="name-${username}" value="${acc.name}" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded focus:outline-none focus:border-indigo-600 font-semibold uppercase">
-          </td>
-          <td class="p-4"><span class="px-2 py-1 text-xs rounded bg-slate-100 text-slate-600 font-semibold">${acc.role}</span></td>
-          <td class="p-4">
-            <input type="text" id="pass-${username}" value="${acc.pass}" class="px-3 py-1 text-xs border border-slate-300 rounded focus:outline-none focus:border-indigo-600 font-mono">
-          </td>
-          <td class="p-4 text-center space-x-1">
-            <button onclick="updateAccountDetails('${username}')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded font-medium shadow-sm transition">
-              Simpan
-            </button>
-            ${username !== 'kepsek' ? `<button onclick="deleteAccount('${username}')" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs rounded font-medium shadow-sm transition"><i class="fa-solid fa-trash"></i></button>` : ''}
-          </td>
+        rows += `
+          <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+            <td class="p-4 text-center font-semibold text-slate-500">${no++}</td>
+            <td class="p-4 font-bold text-slate-800">${username}</td>
+            <td class="p-4 font-semibold text-slate-700">${acc.name}</td>
+            <td class="p-4 text-slate-600">${acc.role}</td>
+            <td class="p-4 font-mono text-xs text-slate-500">${acc.pass}</td>
+            <td class="p-4 text-center">
+              <button onclick="deleteAccount('${username}')" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-semibold transition">
+                <i class="fa-solid fa-trash mr-1"></i> Hapus
+              </button>
+            </td>
+          </tr>
         `;
-        tbody.appendChild(tr);
       });
+      tbody.innerHTML = rows;
     }
 
     function addNewAccount() {
@@ -1348,116 +1310,48 @@
       const pass = document.getElementById('new-acc-pass').value.trim();
       const role = document.getElementById('new-acc-role').value.trim().toUpperCase();
 
-      if (!u || !name || !pass) {
-        alert("Username, Nama, dan Password harus diisi dengan lengkap!");
+      if (!u || !name || !pass || !role) {
+        alert("Semua kolom form akun baru wajib diisi!");
         return;
       }
+
       if (accounts[u]) {
         alert("Username tersebut sudah terdaftar!");
         return;
       }
 
-      accounts[u] = { pass: pass, role: role, name: name };
+      accounts[u] = { pass, role, name };
       saveAccountsData();
-      renderManageAccountsTable();
       populateTeacherSelectDropdown();
+      renderAccountsTable();
 
       document.getElementById('new-acc-user').value = '';
       document.getElementById('new-acc-name').value = '';
       document.getElementById('new-acc-pass').value = '';
-      alert(`Akun guru "${name}" berhasil ditambahkan!`);
+      alert("Akun guru/staf baru berhasil ditambahkan!");
     }
 
     function deleteAccount(username) {
       if (currentUser.role !== 'KEPSEK') return;
       if (username === 'kepsek') {
-        alert("Akun Kepala Sekolah utama tidak dapat dihapus!");
+        alert("Akun utama Kepala Sekolah tidak dapat dihapus!");
         return;
       }
+
       if (confirm(`Apakah Anda yakin ingin menghapus akun "${username}"?`)) {
         delete accounts[username];
         saveAccountsData();
-        renderManageAccountsTable();
         populateTeacherSelectDropdown();
-        alert("Akun berhasil dihapus.");
+        renderAccountsTable();
+        alert("Akun berhasil dihapus!");
       }
-    }
-
-    function updateAccountDetails(username) {
-      if (currentUser.role !== 'KEPSEK') return;
-      const newName = document.getElementById(`name-${username}`).value.trim().toUpperCase();
-      const newPass = document.getElementById(`pass-${username}`).value.trim();
-      
-      if (!newName || !newPass) {
-        alert("Nama dan Password tidak boleh kosong!");
-        return;
-      }
-
-      accounts[username].name = newName;
-      accounts[username].pass = newPass;
-      saveAccountsData();
-      renderManageAccountsTable();
-      populateTeacherSelectDropdown();
-      if (currentDay !== 'REKAP_BULAN' && currentDay !== 'MANAGE_ACCOUNTS') {
-        renderAttendanceTable();
-      }
-      alert(`Data akun "${username}" berhasil diperbarui!`);
-    }
-
-    function switchDay(day) {
-      if (currentUser.role !== 'KEPSEK') return;
-      currentDay = day;
-      const attSec = document.getElementById('attendance-section');
-      const repBulanSec = document.getElementById('rekap-bulan-section');
-      const manageAccSec = document.getElementById('manage-accounts-section');
-
-      attSec.classList.add('hidden');
-      repBulanSec.classList.add('hidden');
-      manageAccSec.classList.add('hidden');
-
-      if (day === 'REKAP_BULAN') {
-        repBulanSec.classList.remove('hidden');
-        renderRekapBulananTable();
-      } else if (day === 'MANAGE_ACCOUNTS') {
-        manageAccSec.classList.remove('hidden');
-        renderManageAccountsTable();
-      } else {
-        attSec.classList.remove('hidden');
-        document.getElementById('selected-day-title').innerText = `HARI ${day}`;
-        renderAttendanceTable();
-      }
-      renderDayTabs();
-    }
-
-    function renderDayTabs() {
-      if (currentUser.role !== 'KEPSEK') return;
-      const container = document.getElementById('kepsek-nav');
-      const tabs = container.querySelectorAll('.day-tab');
-      tabs.forEach(tab => {
-        const text = tab.innerText.trim().toUpperCase();
-        if ((currentDay === 'REKAP_BULAN' && text.includes('REKAP PER BULAN')) || 
-            (currentDay === 'MANAGE_ACCOUNTS' && text.includes('KELOLA AKUN')) ||
-            text === currentDay) {
-          tab.className = "day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white shadow-sm transition";
-        } else {
-          tab.className = "day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition";
-        }
-      });
     }
 
     function saveData() {
       if (db) {
         db.ref('absensi_guru').set(attendanceRecords);
       } else {
-        localStorage.setItem('sma_azmanawadi_absensi_date', JSON.stringify(attendanceRecords));
-      }
-    }
-
-    function saveAccountsData() {
-      if (db) {
-        db.ref('accounts_config').set(accounts);
-      } else {
-        localStorage.setItem('sma_azmanawadi_accounts', JSON.stringify(accounts));
+        localStorage.setItem('absensi_guru', JSON.stringify(attendanceRecords));
       }
     }
 
@@ -1465,38 +1359,65 @@
       if (db) {
         db.ref('schedule_config').set(scheduleData);
       } else {
-        localStorage.setItem('sma_azmanawadi_schedule', JSON.stringify(scheduleData));
+        localStorage.setItem('schedule_config', JSON.stringify(scheduleData));
+      }
+    }
+
+    function saveAccountsData() {
+      if (db) {
+        db.ref('accounts_config').set(accounts);
+      } else {
+        localStorage.setItem('accounts_config', JSON.stringify(accounts));
       }
     }
 
     function loadFromLocalStorage() {
-      const data = localStorage.getItem('sma_azmanawadi_absensi_date');
-      if (data) attendanceRecords = JSON.parse(data);
+      const localAtt = localStorage.getItem('absensi_guru');
+      if (localAtt) attendanceRecords = JSON.parse(localAtt);
 
-      const schData = localStorage.getItem('sma_azmanawadi_schedule');
-      if (schData) scheduleData = JSON.parse(schData);
-    }
+      const localAcc = localStorage.getItem('accounts_config');
+      if (localAcc) accounts = JSON.parse(localAcc);
 
-    function loadAccountsFromStorage() {
-      const data = localStorage.getItem('sma_azmanawadi_accounts');
-      if (data) accounts = JSON.parse(data);
+      const localSch = localStorage.getItem('schedule_config');
+      if (localSch) scheduleData = JSON.parse(localSch);
     }
 
     function downloadMonthlyCSV() {
-      if (currentUser.username !== 'kepsek') return;
       const bulanVal = document.getElementById('select-bulan').value;
-      let csvContent = "data:text/csv;charset=utf-8,No,Nama Guru/Staf,Jabatan,Hadir,Terlambat,Izin,Sakit,Alpa\n";
+      if (!bulanVal) {
+        alert("Pilih bulan terlebih dahulu!");
+        return;
+      }
 
-      let idx = 1;
+      let csvContent = "data:text/csv;charset=utf-8,No,Nama Guru/Staf,Role,Hadir,Terlambat,Izin,Sakit,Alpa\n";
+      let no = 1;
+
       Object.keys(accounts).forEach(username => {
-        const teacher = globalTeacherMapForDetail[username] || { name: accounts[username].name, role: accounts[username].role, hadir: 0, terlambat: 0, izin: 0, sakit: 0, alpa: 0 };
-        csvContent += `${idx++},"${teacher.name}","${teacher.role}",${teacher.hadir},${teacher.terlambat},${teacher.izin},${teacher.sakit},${teacher.alpa}\n`;
+        const acc = accounts[username];
+        let cH = 0, cT = 0, cI = 0, cS = 0, cA = 0;
+
+        Object.keys(attendanceRecords).forEach(tgl => {
+          if (tgl.startsWith(bulanVal)) {
+            const dObj = new Date(tgl + "T00:00:00");
+            if (dObj.getDay() !== 0) {
+              const rec = attendanceRecords[tgl][username] || {};
+              const st = rec.status || 'Alpa';
+              if (st === 'Hadir') cH++;
+              else if (st === 'Terlambat') cT++;
+              else if (st === 'Izin') cI++;
+              else if (st === 'Sakit') cS++;
+              else if (st === 'Alpa') cA++;
+            }
+          }
+        });
+
+        csvContent += `${no++},"${acc.name}","${acc.role}",${cH},${cT},${cI},${cS},${cA}\n`;
       });
 
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `Rekap_Bulanan_Guru_${bulanVal}.csv`);
+      link.setAttribute("download", `Rekap_Absensi_${bulanVal}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
