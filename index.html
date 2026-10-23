@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Aplikasi Absensi Guru - SMA Azmanawadi</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,10 +11,10 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-  <!-- Library Chart.js untuk Grafik Analitik -->
+  <!-- Library Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
-  <!-- Library SheetJS untuk Ekspor Excel .xlsx -->
+  <!-- Library SheetJS -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
@@ -23,6 +23,7 @@
     .status-btn.active-izin { background-color: #3B82F6; color: white; border-color: #2563EB; }
     .status-btn.active-sakit { background-color: #8B5CF6; color: white; border-color: #7C3AED; }
     .status-btn.active-alpa { background-color: #EF4444; color: white; border-color: #DC2626; }
+    
     @media print {
       .no-print { display: none !important; }
       .print-only { display: block !important; }
@@ -30,45 +31,45 @@
     }
   </style>
 </head>
-<body class="bg-slate-900 min-h-screen text-slate-800 font-sans pb-12">
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans pb-12 antialiased">
 
   <!-- Modal Login -->
-  <div id="login-modal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center p-4 md:p-8">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 md:p-10 space-y-6 border border-slate-200">
-      <div class="text-center space-y-3">
-        <div class="inline-flex p-4 bg-indigo-50 text-indigo-900 rounded-2xl shadow-sm">
-          <i class="fa-solid fa-location-dot text-4xl"></i>
+  <div id="login-modal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 md:p-8 space-y-6 border border-slate-100">
+      <div class="text-center space-y-2">
+        <div class="inline-flex p-3.5 bg-indigo-50 text-indigo-900 rounded-2xl shadow-sm">
+          <i class="fa-solid fa-graduation-cap text-3xl"></i>
         </div>
-        <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900">Login Aplikasi Absensi</h2>
-        <p class="text-xs md:text-sm text-slate-500">Silakan masukkan username dan password Anda untuk masuk.</p>
-        <div id="gps-check-status" class="text-xs font-semibold text-indigo-600 bg-indigo-50 py-1.5 px-3 rounded-lg border border-indigo-100">
+        <h2 class="text-2xl font-extrabold text-slate-900">Login Absensi Guru</h2>
+        <p class="text-xs text-slate-500">SMA AZMANAWADI KOTARAJA</p>
+        <div id="gps-check-status" class="text-xs font-semibold text-indigo-600 bg-indigo-50 py-1.5 px-3 rounded-lg border border-indigo-100 mt-2">
           <i class="fa-solid fa-spinner fa-spin mr-1"></i> Memeriksa lokasi GPS Anda...
         </div>
       </div>
 
-      <div class="space-y-5">
+      <div class="space-y-4">
         <div>
-          <label class="block text-xs md:text-sm font-semibold text-slate-700 uppercase mb-1.5">Username</label>
-          <input type="text" id="login-user" placeholder="Masukkan username..." class="w-full px-4 py-3 text-sm md:text-base border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition">
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Username</label>
+          <input type="text" id="login-user" placeholder="Masukkan username..." class="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 transition">
         </div>
         <div>
-          <label class="block text-xs md:text-sm font-semibold text-slate-700 uppercase mb-1.5">Password</label>
-          <input type="password" id="login-pass" placeholder="Masukkan password..." class="w-full px-4 py-3 text-sm md:text-base border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition">
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Password</label>
+          <input type="password" id="login-pass" placeholder="Masukkan password..." class="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 transition">
         </div>
-        <p id="login-error" class="text-xs md:text-sm text-rose-500 font-medium hidden">Username atau password salah!</p>
-        <button onclick="processLogin()" class="w-full py-3.5 bg-indigo-900 hover:bg-indigo-800 text-white rounded-xl font-bold text-sm md:text-base transition shadow-lg hover:shadow-indigo-900/30">
+        <p id="login-error" class="text-xs text-rose-500 font-medium hidden">Username atau password salah!</p>
+        <button onclick="processLogin()" class="w-full py-3 bg-indigo-900 hover:bg-indigo-800 text-white rounded-xl font-bold text-sm transition shadow-lg hover:shadow-indigo-900/20">
           Masuk Aplikasi
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Modal Ubah Password Mandiri (Guru/Staf) -->
+  <!-- Modal Ubah Password Mandiri -->
   <div id="change-pass-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-slate-200">
       <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-key text-amber-500 mr-2"></i>Ubah Password Saya</h3>
-        <button onclick="closeChangePassModal()" class="text-slate-400 hover:text-slate-600 text-lg p-2"><i class="fa-solid fa-xmark"></i></button>
+        <h3 class="text-base font-bold text-slate-900"><i class="fa-solid fa-key text-amber-500 mr-2"></i>Ubah Password Saya</h3>
+        <button onclick="closeChangePassModal()" class="text-slate-400 hover:text-slate-600 text-lg p-1"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="space-y-3">
         <div>
@@ -93,12 +94,45 @@
     </div>
   </div>
 
-  <!-- Modal Form Pengajuan Izin/Sakit Mandiri oleh Guru -->
+  <!-- Modal Edit Password/Akun oleh Kepsek -->
+  <div id="edit-account-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-slate-200">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-base font-bold text-slate-900"><i class="fa-solid fa-user-pen text-indigo-600 mr-2"></i>Edit Akun Guru</h3>
+        <button onclick="closeEditAccountModal()" class="text-slate-400 hover:text-slate-600 text-lg p-1"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <input type="hidden" id="edit-acc-username">
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Username</label>
+          <input type="text" id="edit-acc-user-display" class="w-full px-3 py-2 text-xs border border-slate-200 bg-slate-100 rounded-lg font-semibold" disabled>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Nama Lengkap & Gelar</label>
+          <input type="text" id="edit-acc-name" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 font-semibold">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Jabatan / Role</label>
+          <input type="text" id="edit-acc-role" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 font-semibold">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Password Baru</label>
+          <input type="text" id="edit-acc-pass" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 font-semibold">
+        </div>
+      </div>
+      <div class="flex justify-end space-x-2 pt-2 border-t">
+        <button onclick="closeEditAccountModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold rounded-lg transition">Batal</button>
+        <button onclick="saveAccountChangesByKepsek()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">Simpan Perubahan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Form Pengajuan Izin/Sakit Mandiri -->
   <div id="leave-request-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 border border-slate-200">
       <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-file-signature text-blue-600 mr-2"></i>Form Pengajuan Izin / Sakit</h3>
-        <button onclick="closeLeaveModal()" class="text-slate-400 hover:text-slate-600 text-lg p-2"><i class="fa-solid fa-xmark"></i></button>
+        <h3 class="text-base font-bold text-slate-900"><i class="fa-solid fa-file-signature text-blue-600 mr-2"></i>Form Pengajuan Izin / Sakit</h3>
+        <button onclick="closeLeaveModal()" class="text-slate-400 hover:text-slate-600 text-lg p-1"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="space-y-3 text-xs">
         <div>
@@ -130,15 +164,15 @@
     </div>
   </div>
 
-  <!-- Modal Detail Tanggal Kehadiran (Khusus Kepsek) -->
+  <!-- Modal Detail Tanggal Kehadiran -->
   <div id="detail-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-4 border border-slate-200">
       <div class="flex justify-between items-center border-b pb-3">
         <div>
-          <h3 id="detail-modal-title" class="text-lg font-bold text-slate-900">Rincian Tanggal Kehadiran</h3>
+          <h3 id="detail-modal-title" class="text-base font-bold text-slate-900">Rincian Tanggal Kehadiran</h3>
           <p id="detail-modal-subtitle" class="text-xs text-slate-500">-</p>
         </div>
-        <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600 text-lg p-2"><i class="fa-solid fa-xmark"></i></button>
+        <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600 text-lg p-1"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="max-h-80 overflow-y-auto">
         <table class="w-full text-left border-collapse text-xs">
@@ -147,7 +181,7 @@
               <th class="p-3">Tanggal</th>
               <th class="p-3">Hari</th>
               <th class="p-3">Status Saat Ini</th>
-              <th class="p-3 text-center">Aksi / Ubah Status</th>
+              <th class="p-3 text-center">Ubah Status</th>
             </tr>
           </thead>
           <tbody id="detail-modal-body" class="divide-y divide-slate-100">
@@ -155,7 +189,7 @@
           </tbody>
         </table>
       </div>
-      <div class="text-right pt-2">
+      <div class="text-right pt-2 border-t">
         <button onclick="closeDetailModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold rounded-lg transition">Tutup</button>
       </div>
     </div>
@@ -164,25 +198,25 @@
   <!-- Main App Wrapper -->
   <div id="app-content" class="hidden min-h-screen bg-slate-100">
     <header class="bg-indigo-900 text-white shadow-md no-print">
-      <div class="max-w-7xl mx-auto px-4 py-5 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <div class="flex items-center space-x-3">
-          <div class="p-3 bg-indigo-800 rounded-lg">
-            <i class="fa-solid fa-graduation-cap text-3xl text-amber-400"></i>
+          <div class="p-2.5 bg-indigo-800 rounded-xl">
+            <i class="fa-solid fa-graduation-cap text-2xl text-amber-400"></i>
           </div>
           <div>
-            <h1 class="text-2xl font-bold tracking-wide">SMA AZMANAWADI</h1>
+            <h1 class="text-xl font-bold tracking-wide">SMA AZMANAWADI</h1>
             <p class="text-xs text-indigo-200" id="header-subtitle">Sistem Absensi Guru & Staf Harian</p>
           </div>
         </div>
         
-        <div class="flex flex-wrap items-center gap-3 bg-indigo-950 p-3 rounded-xl border border-indigo-700 shadow-inner">
-          <div class="flex items-center space-x-2">
-            <i class="fa-regular fa-calendar-days text-amber-400 text-lg"></i>
-            <span class="text-xs text-indigo-200 font-medium">Tanggal Pilih:</span>
+        <div class="flex flex-wrap items-center gap-2 bg-indigo-950 p-2.5 rounded-xl border border-indigo-800 shadow-inner">
+          <div class="flex items-center space-x-1.5 px-2">
+            <i class="fa-regular fa-calendar-days text-amber-400 text-sm"></i>
+            <span class="text-xs text-indigo-200 font-medium">Pilih Tanggal:</span>
           </div>
-          <input type="date" id="attendance-date" onchange="onDateChange()" class="bg-indigo-900 text-white text-sm font-semibold px-3 py-1.5 rounded-lg border border-indigo-600 focus:outline-none focus:border-amber-400 cursor-pointer">
-          <div id="firebase-status" class="text-[10px] text-amber-300 bg-indigo-900/50 px-2.5 py-1 rounded border border-indigo-800">Menghubungkan...</div>
-          <button onclick="processLogout()" class="px-3 py-1.5 text-xs bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium transition flex items-center space-x-1">
+          <input type="date" id="attendance-date" onchange="onDateChange()" class="bg-indigo-900 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-indigo-700 focus:outline-none focus:border-amber-400 cursor-pointer">
+          <div id="firebase-status" class="text-[10px] text-amber-300 bg-indigo-900/60 px-2 py-1 rounded border border-indigo-800">Menghubungkan...</div>
+          <button onclick="processLogout()" class="px-3 py-1.5 text-xs bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-semibold transition flex items-center space-x-1">
             <i class="fa-solid fa-right-from-bracket"></i>
             <span>Keluar</span>
           </button>
@@ -190,43 +224,40 @@
       </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 mt-6 space-y-6">
-      <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-3 no-print">
+    <main class="max-w-7xl mx-auto px-4 mt-5 space-y-5">
+      <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-2 no-print">
         <!-- Kepsek Navigation -->
-        <div class="flex flex-wrap gap-1 hidden" id="kepsek-nav">
-          <button onclick="switchDay('SENIN')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition">Senin</button>
-          <button onclick="switchDay('SELASA')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition">Selasa</button>
-          <button onclick="switchDay('RABU')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition">Rabu</button>
-          <button onclick="switchDay('KAMIS')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition">Kamis</button>
-          <button onclick="switchDay('JUMAT')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition">Jumat</button>
-          <button onclick="switchDay('SABTU')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition">Sabtu</button>
-          <button onclick="switchDay('APPROVAL_IZIN')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition relative">
+        <div class="flex flex-wrap gap-1.5 hidden" id="kepsek-nav">
+          <button onclick="switchView('ABSENSI_HARIAN')" id="nav-btn-absensi" class="day-tab px-3.5 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition">
+            <i class="fa-solid fa-calendar-check mr-1"></i> Absensi Harian
+          </button>
+          <button onclick="switchView('APPROVAL_IZIN')" id="nav-btn-izin" class="day-tab px-3.5 py-1.5 text-xs font-bold rounded-lg bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition relative">
             <i class="fa-solid fa-envelope-open-text mr-1"></i> Persetujuan Izin
-            <span id="pending-badge" class="hidden absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-sm">0</span>
+            <span id="pending-badge" class="hidden absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold shadow-sm">0</span>
           </button>
-          <button onclick="switchDay('REKAP_BULAN')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition">
-            <i class="fa-solid fa-calendar-days mr-1"></i> Rekap Per Bulan
+          <button onclick="switchView('REKAP_BULAN')" id="nav-btn-rekap" class="day-tab px-3.5 py-1.5 text-xs font-bold rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition">
+            <i class="fa-solid fa-calendar-days mr-1"></i> Rekap Bulanan
           </button>
-          <button onclick="switchDay('MANAGE_ACCOUNTS')" class="day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition">
+          <button onclick="switchView('MANAGE_ACCOUNTS')" id="nav-btn-accounts" class="day-tab px-3.5 py-1.5 text-xs font-bold rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition">
             <i class="fa-solid fa-users-gear mr-1"></i> Kelola Akun Guru
           </button>
         </div>
 
         <!-- Guru Navigation -->
         <div class="flex flex-wrap gap-2 hidden" id="guru-nav">
-          <button id="guru-tab-today" onclick="switchGuruView('TODAY')" class="px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition flex items-center space-x-1">
+          <button id="guru-tab-today" onclick="switchGuruView('TODAY')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition flex items-center space-x-1">
             <i class="fa-solid fa-calendar-check mr-1"></i>
             <span>Absen Hari Ini</span>
           </button>
-          <button id="guru-tab-history" onclick="switchGuruView('HISTORY')" class="px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition flex items-center space-x-1">
+          <button id="guru-tab-history" onclick="switchGuruView('HISTORY')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg text-slate-600 hover:bg-slate-100 transition flex items-center space-x-1">
             <i class="fa-solid fa-clock-rotate-left mr-1"></i>
-            <span>Cek Riwayat Absensi Saya</span>
+            <span>Riwayat Absensi Saya</span>
           </button>
-          <button onclick="openLeaveModal()" class="px-4 py-2 text-sm font-semibold rounded-lg bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition flex items-center space-x-1">
+          <button onclick="openLeaveModal()" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition flex items-center space-x-1">
             <i class="fa-solid fa-paper-plane mr-1"></i>
             <span>Ajukan Izin / Sakit</span>
           </button>
-          <button onclick="openChangePassModal()" class="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition flex items-center space-x-1">
+          <button onclick="openChangePassModal()" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition flex items-center space-x-1">
             <i class="fa-solid fa-key mr-1"></i>
             <span>Ubah Password</span>
           </button>
@@ -235,13 +266,13 @@
 
       <!-- Attendance View -->
       <div id="attendance-section" class="space-y-4">
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-3">
           <div>
             <div class="flex items-center space-x-2">
-              <h2 id="selected-day-title" class="text-xl font-bold text-slate-800">HARI SENIN</h2>
-              <span id="display-formatted-date" class="text-xs bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1 rounded-full border border-indigo-200"></span>
+              <h2 id="selected-day-title" class="text-lg font-bold text-slate-800">HARI SENIN</h2>
+              <span id="display-formatted-date" class="text-xs bg-indigo-100 text-indigo-700 font-bold px-2.5 py-0.5 rounded-full border border-indigo-200"></span>
             </div>
-            <p class="text-xs text-slate-500 mt-0.5" id="attendance-subtitle">Silakan tentukan status kehadiran guru & staf di bawah ini.</p>
+            <p class="text-xs text-slate-500 mt-0.5" id="attendance-subtitle">Silakan tentukan status kehadiran guru & staf pada tanggal yang dipilih di atas.</p>
           </div>
 
           <div class="flex flex-wrap items-center gap-2 text-xs w-full md:w-auto">
@@ -256,54 +287,54 @@
               <option value="Izin">Izin</option>
               <option value="Sakit">Sakit</option>
               <option value="Alpa">Alpa</option>
+              <option value="Reset">Reset (0)</option>
             </select>
           </div>
 
-          <div id="stats-container" class="flex flex-wrap gap-2 text-xs w-full">
-            <span class="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 font-medium border border-emerald-200" id="stat-hadir">Hadir: 0</span>
-            <span class="px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 font-medium border border-amber-200" id="stat-terlambat">Terlambat: 0</span>
-            <span class="px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 font-medium border border-blue-200" id="stat-izin">Izin: 0</span>
-            <span class="px-3 py-1.5 rounded-full bg-purple-50 text-purple-700 font-medium border border-purple-200" id="stat-sakit">Sakit: 0</span>
-            <span class="px-3 py-1.5 rounded-full bg-rose-50 text-rose-700 font-medium border border-rose-200" id="stat-alpa">Alpa: 0</span>
+          <div id="stats-container" class="flex flex-wrap gap-2 text-xs w-full border-t pt-3 mt-1">
+            <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200" id="stat-hadir">Hadir: 0</span>
+            <span class="px-3 py-1 rounded-full bg-amber-50 text-amber-700 font-semibold border border-amber-200" id="stat-terlambat">Terlambat: 0</span>
+            <span class="px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-semibold border border-blue-200" id="stat-izin">Izin: 0</span>
+            <span class="px-3 py-1 rounded-full bg-purple-50 text-purple-700 font-semibold border border-purple-200" id="stat-sakit">Sakit: 0</span>
+            <span class="px-3 py-1 rounded-full bg-rose-50 text-rose-700 font-semibold border border-rose-200" id="stat-alpa">Alpa: 0</span>
           </div>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full text-left border-collapse text-xs md:text-sm">
               <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase tracking-wider">
-                  <th class="p-4 w-12 text-center">No</th>
-                  <th class="p-4">Nama Lengkap</th>
-                  <th class="p-4">Jabatan</th>
-                  <th class="p-4 text-center">Status Kehadiran</th>
-                  <th class="p-4 text-center">Waktu Catat</th>
-                  <th class="p-4">Keterangan / Catatan</th>
+                  <th class="p-3.5 w-10 text-center">No</th>
+                  <th class="p-3.5">Nama Lengkap</th>
+                  <th class="p-3.5">Jabatan</th>
+                  <th class="p-3.5 text-center">Status Kehadiran</th>
+                  <th class="p-3.5 text-center">Waktu</th>
+                  <th class="p-3.5">Keterangan</th>
                 </tr>
               </thead>
-              <tbody id="attendance-body" class="divide-y divide-slate-100 text-sm">
+              <tbody id="attendance-body" class="divide-y divide-slate-100">
                 <!-- JS Populated -->
               </tbody>
             </table>
           </div>
         </div>
 
-        <div id="manage-schedule-container" class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4 no-print hidden">
-          <h3 class="text-md font-bold text-slate-850 flex items-center">
-            <i class="fa-solid fa-user-gear mr-2 text-indigo-600"></i>
+        <div id="manage-schedule-container" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3 no-print hidden">
+          <h3 class="text-xs font-bold text-slate-700 uppercase flex items-center">
+            <i class="fa-solid fa-user-gear mr-1.5 text-indigo-600"></i>
             <span id="manage-schedule-title">Kelola Tugas Guru Harian</span>
           </h3>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Pilih Guru dari Daftar Akun</label>
+          <div class="flex flex-col md:flex-row gap-2 items-stretch md:items-center">
+            <div class="flex-1">
               <select id="select-teacher-to-add" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 bg-slate-50 font-semibold">
                 <!-- Populated JS -->
               </select>
             </div>
             <div>
-              <button onclick="addTeacherToCurrentDaySchedule()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition flex items-center justify-center space-x-1 w-full md:w-auto">
+              <button onclick="addTeacherToCurrentDaySchedule()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-sm transition flex items-center justify-center space-x-1 w-full">
                 <i class="fa-solid fa-user-plus mr-1"></i>
-                <span>Tambahkan ke Jadwal Hari Ini</span>
+                <span>Tambahkan ke Jadwal</span>
               </button>
             </div>
           </div>
@@ -312,29 +343,30 @@
 
       <!-- Riwayat Absensi Saya (Guru View) -->
       <div id="guru-history-section" class="space-y-4 hidden">
-        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-3">
           <div>
-            <h2 class="text-xl font-bold text-slate-800">Riwayat Absensi Kehadiran Saya</h2>
-            <p class="text-xs text-slate-500">Lihat tanggal dan hari apa saja Anda telah melakukan absensi.</p>
+            <h2 class="text-lg font-bold text-slate-800">Riwayat Kehadiran Saya</h2>
+            <p class="text-xs text-slate-500">Rekapitulasi tanggal & status absensi Anda.</p>
           </div>
-          <div class="flex flex-wrap items-center gap-3">
+          <div class="flex flex-wrap items-center gap-2">
             <div>
-              <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-1">Dari Tanggal</label>
-              <input type="date" id="guru-history-start" onchange="renderGuruHistoryTable()" class="px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 font-semibold bg-slate-50">
+              <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-0.5">Dari Tanggal</label>
+              <input type="date" id="guru-history-start" onchange="renderGuruHistoryTable()" class="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 font-semibold bg-slate-50">
             </div>
             <div>
-              <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-1">Sampai Tanggal</label>
-              <input type="date" id="guru-history-end" onchange="renderGuruHistoryTable()" class="px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 font-semibold bg-slate-50">
+              <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-0.5">Sampai Tanggal</label>
+              <input type="date" id="guru-history-end" onchange="renderGuruHistoryTable()" class="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 font-semibold bg-slate-50">
             </div>
             <div>
-              <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-1">Status</label>
-              <select id="guru-history-status" onchange="renderGuruHistoryTable()" class="px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 font-semibold bg-slate-50">
+              <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-0.5">Status</label>
+              <select id="guru-history-status" onchange="renderGuruHistoryTable()" class="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 font-semibold bg-slate-50">
                 <option value="ALL">Semua Status</option>
                 <option value="Hadir">Hadir</option>
                 <option value="Terlambat">Terlambat</option>
                 <option value="Izin">Izin</option>
                 <option value="Sakit">Sakit</option>
                 <option value="Alpa">Alpa</option>
+                <option value="Reset">Reset (0)</option>
               </select>
             </div>
           </div>
@@ -342,18 +374,18 @@
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full text-left border-collapse text-xs md:text-sm">
               <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase tracking-wider">
-                  <th class="p-4 w-12 text-center">No</th>
-                  <th class="p-4">Tanggal</th>
-                  <th class="p-4">Hari</th>
-                  <th class="p-4 text-center">Status</th>
-                  <th class="p-4 text-center">Jam Absen</th>
-                  <th class="p-4">Catatan / Alasan</th>
+                  <th class="p-3.5 w-10 text-center">No</th>
+                  <th class="p-3.5">Tanggal</th>
+                  <th class="p-3.5">Hari</th>
+                  <th class="p-3.5 text-center">Status</th>
+                  <th class="p-3.5 text-center">Jam Absen</th>
+                  <th class="p-3.5">Catatan</th>
                 </tr>
               </thead>
-              <tbody id="guru-history-body" class="divide-y divide-slate-100 text-sm">
+              <tbody id="guru-history-body" class="divide-y divide-slate-100">
                 <!-- JS Populated -->
               </tbody>
             </table>
@@ -361,28 +393,28 @@
         </div>
       </div>
 
-      <!-- Halaman Persetujuan Izin (Khusus Kepsek) -->
+      <!-- Persetujuan Izin (Kepsek View) -->
       <div id="approval-izin-section" class="space-y-4 hidden">
-        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-          <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-envelope-open-text text-blue-600 mr-2"></i>Daftar Pengajuan Izin / Sakit Guru</h2>
-          <p class="text-xs text-slate-500">Tinjau dan berikan persetujuan atau penolakan pengajuan izin/sakit dari guru.</p>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+          <h2 class="text-lg font-bold text-slate-800"><i class="fa-solid fa-envelope-open-text text-blue-600 mr-2"></i>Daftar Pengajuan Izin / Sakit Guru</h2>
+          <p class="text-xs text-slate-500">Tinjau dan berikan persetujuan atau penolakan pengajuan izin/sakit.</p>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full text-left border-collapse text-xs md:text-sm">
               <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase tracking-wider">
-                  <th class="p-4 w-12 text-center">No</th>
-                  <th class="p-4">Nama Guru</th>
-                  <th class="p-4 text-center">Jenis</th>
-                  <th class="p-4">Periode Tanggal</th>
-                  <th class="p-4">Alasan / Catatan</th>
-                  <th class="p-4 text-center">Status Pengajuan</th>
-                  <th class="p-4 text-center">Aksi Kepsek</th>
+                  <th class="p-3.5 w-10 text-center">No</th>
+                  <th class="p-3.5">Nama Guru</th>
+                  <th class="p-3.5 text-center">Jenis</th>
+                  <th class="p-3.5">Periode Tanggal</th>
+                  <th class="p-3.5">Alasan</th>
+                  <th class="p-3.5 text-center">Status</th>
+                  <th class="p-3.5 text-center">Aksi</th>
                 </tr>
               </thead>
-              <tbody id="leave-requests-body" class="divide-y divide-slate-100 text-sm">
+              <tbody id="leave-requests-body" class="divide-y divide-slate-100">
                 <!-- JS Populated -->
               </tbody>
             </table>
@@ -390,7 +422,7 @@
         </div>
       </div>
 
-      <!-- Rekap Bulanan View & Dashboard Grafik Statistik -->
+      <!-- Rekap Bulanan View & Dashboard Statistik -->
       <div id="rekap-bulan-section" class="space-y-4 hidden">
         <div class="hidden print-only mb-6 text-center border-b pb-4">
           <h1 class="text-2xl font-bold text-gray-900">SMA AZMANAWADI KOTARAJA</h1>
@@ -398,70 +430,69 @@
           <p class="text-sm text-gray-600" id="print-info-rekap-bulan">-</p>
         </div>
 
-        <!-- Visualisasi Grafik Statistik Kehadiran -->
+        <!-- Visualisasi Grafik -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 no-print">
           <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
-            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"><i class="fa-solid fa-chart-pie mr-1 text-indigo-600"></i> Komposisi Kehadiran Bulan Ini</h3>
-            <div class="relative flex items-center justify-center max-h-48">
+            <h3 class="text-xs font-bold text-slate-600 uppercase mb-2"><i class="fa-solid fa-chart-pie mr-1 text-indigo-600"></i> Total Komposisi Kehadiran</h3>
+            <div class="relative flex items-center justify-center h-44">
               <canvas id="chartDoughnutTotal"></canvas>
             </div>
           </div>
           <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 md:col-span-2 flex flex-col justify-between">
-            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"><i class="fa-solid fa-chart-column mr-1 text-indigo-600"></i> Perbandingan Kehadiran Per Guru</h3>
-            <div class="relative flex items-center justify-center max-h-48 w-full">
+            <h3 class="text-xs font-bold text-slate-600 uppercase mb-2"><i class="fa-solid fa-chart-column mr-1 text-indigo-600"></i> Tingkat Kehadiran Per Guru</h3>
+            <div class="relative flex items-center justify-center h-44 w-full">
               <canvas id="chartBarGuru"></canvas>
             </div>
           </div>
         </div>
 
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4 no-print">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-3 no-print">
           <div>
-            <h2 class="text-xl font-bold text-slate-800">Rekapitulasi Kehadiran Per Bulan</h2>
-            <p class="text-xs text-slate-500">Klik angka pada tabel untuk melihat rincian tanggal, mengedit, atau mereset status.</p>
+            <h2 class="text-lg font-bold text-slate-800">Rekapitulasi Kehadiran Bulan Berjalan</h2>
+            <p class="text-xs text-slate-500">Hitungan riil dari tgl 20 Oktober 2026 s/d hari ini. Klik "Detail" untuk cek rincian per tanggal.</p>
           </div>
-          <div class="flex flex-wrap items-center gap-3">
+          <div class="flex flex-wrap items-center gap-2">
             <div>
-              <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-1">Pilih Bulan</label>
+              <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-0.5">Pilih Bulan</label>
               <input type="month" id="select-bulan" onchange="renderRekapBulananTable()" class="px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 font-semibold bg-slate-50">
             </div>
-            <button onclick="resetMonthlyAttendance()" class="mt-4 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-2">
+            <button onclick="resetMonthlyAttendance()" class="mt-4 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-sm transition flex items-center space-x-1">
               <i class="fa-solid fa-rotate-left"></i>
               <span>Reset Bulan Ini</span>
             </button>
-            <button onclick="downloadMonthlyXLSX()" class="mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium shadow-sm transition flex items-center space-x-2">
+            <button onclick="downloadMonthlyXLSX()" class="mt-4 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition flex items-center space-x-1">
               <i class="fa-solid fa-file-excel"></i>
-              <span>Unduh Excel (.xlsx)</span>
+              <span>Unduh Excel</span>
             </button>
-            <button onclick="window.print()" class="mt-4 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium border border-slate-200 transition flex items-center space-x-2">
+            <button onclick="window.print()" class="mt-4 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold border border-slate-300 transition flex items-center space-x-1">
               <i class="fa-solid fa-print"></i>
-              <span>Cetak PDF Laporan</span>
+              <span>Cetak PDF</span>
             </button>
           </div>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full text-left border-collapse text-xs md:text-sm">
               <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase">
-                  <th class="p-4 w-12 text-center">No</th>
-                  <th class="p-4">Nama Guru / Staf</th>
-                  <th class="p-4 text-center text-emerald-600">Hadir</th>
-                  <th class="p-4 text-center text-amber-600">Terlambat</th>
-                  <th class="p-4 text-center text-blue-600">Izin</th>
-                  <th class="p-4 text-center text-purple-600">Sakit</th>
-                  <th class="p-4 text-center text-rose-600">Alpa</th>
-                  <th class="p-4 text-center no-print">Riwayat</th>
+                  <th class="p-3.5 w-10 text-center">No</th>
+                  <th class="p-3.5">Nama Guru / Staf</th>
+                  <th class="p-3.5 text-center text-emerald-600">Hadir</th>
+                  <th class="p-3.5 text-center text-amber-600">Terlambat</th>
+                  <th class="p-3.5 text-center text-blue-600">Izin</th>
+                  <th class="p-3.5 text-center text-purple-600">Sakit</th>
+                  <th class="p-3.5 text-center text-rose-600">Alpa</th>
+                  <th class="p-3.5 text-center no-print">Rincian</th>
                 </tr>
               </thead>
-              <tbody id="rekap-bulan-body" class="divide-y divide-slate-100 text-sm">
+              <tbody id="rekap-bulan-body" class="divide-y divide-slate-100">
                 <!-- JS Populated -->
               </tbody>
             </table>
           </div>
         </div>
 
-        <!-- Tanda Tangan Cetak PDF Laporan -->
         <div class="hidden print-only mt-12 flex justify-between text-center text-sm">
           <div>
             <p>Mengetahui,</p>
@@ -477,10 +508,10 @@
       </div>
 
       <!-- Manage Accounts View -->
-      <div id="manage-accounts-section" class="space-y-6 hidden">
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
-          <h2 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-user-plus mr-2 text-indigo-600"></i>Tambah Akun Guru / Staf Baru</h2>
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div id="manage-accounts-section" class="space-y-5 hidden">
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-3">
+          <h2 class="text-base font-bold text-slate-800"><i class="fa-solid fa-user-plus mr-2 text-indigo-600"></i>Tambah Akun Guru / Staf Baru</h2>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div>
               <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Username Login</label>
               <input type="text" id="new-acc-user" placeholder="cth: budi" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600">
@@ -490,7 +521,7 @@
               <input type="text" id="new-acc-name" placeholder="cth: BUDI SANTOSO, S.PD" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600">
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Password</label>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Password Initial</label>
               <input type="text" id="new-acc-pass" placeholder="Password akun..." class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600">
             </div>
             <div>
@@ -498,30 +529,30 @@
               <input type="text" id="new-acc-role" value="GURU" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 font-semibold">
             </div>
           </div>
-          <button onclick="addNewAccount()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
+          <button onclick="addNewAccount()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-sm transition">
             <i class="fa-solid fa-plus mr-1"></i> Simpan Akun Baru
           </button>
         </div>
 
         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-          <h2 class="text-xl font-bold text-slate-800">Daftar Akun & Kata Sandi</h2>
-          <p class="text-xs text-slate-500">Anda dapat mengedit nama, mengubah sandi, atau menghapus akun guru dari sistem.</p>
+          <h2 class="text-lg font-bold text-slate-800">Daftar Akun & Kata Sandi Terdaftar</h2>
+          <p class="text-xs text-slate-500">Semua perubahan password oleh guru akan ter-sinkronisasi di sini secara langsung.</p>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full text-left border-collapse text-xs md:text-sm">
               <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase">
-                  <th class="p-4 w-12 text-center">No</th>
-                  <th class="p-4">Username</th>
-                  <th class="p-4">Nama Lengkap & Gelar</th>
-                  <th class="p-4">Peran (Role)</th>
-                  <th class="p-4">Password</th>
-                  <th class="p-4 text-center">Aksi</th>
+                  <th class="p-3.5 w-10 text-center">No</th>
+                  <th class="p-3.5">Username</th>
+                  <th class="p-3.5">Nama Lengkap & Gelar</th>
+                  <th class="p-3.5">Peran (Role)</th>
+                  <th class="p-3.5">Password</th>
+                  <th class="p-3.5 text-center">Aksi</th>
                 </tr>
               </thead>
-              <tbody id="accounts-table-body" class="divide-y divide-slate-100 text-sm">
+              <tbody id="accounts-table-body" class="divide-y divide-slate-100">
                 <!-- JS Populated -->
               </tbody>
             </table>
@@ -559,13 +590,23 @@
     let userDistanceInMeters = null;
 
     let leaveRequests = [];
-
     let chartDoughnutInstance = null;
     let chartBarInstance = null;
 
     const SCHOOL_LAT = -8.593142; 
     const SCHOOL_LNG = 116.424538; 
     const MAX_ALLOWED_DISTANCE_METERS = 250; 
+
+    // Tanggal acuan awal mulai hitungan absensi
+    const START_ABSENSI_DATE = new Date("2026-10-20T00:00:00");
+
+    function getEffectiveDate() {
+      const now = new Date();
+      if (now.getHours() < 6) {
+        now.setDate(now.getDate() - 1);
+      }
+      return now;
+    }
 
     function calculateDistance(lat1, lon1, lat2, lon2) {
       const R = 6371e3; 
@@ -584,9 +625,10 @@
 
     function checkClientGPS() {
       const gpsStatusEl = document.getElementById('gps-check-status');
+      if (!gpsStatusEl) return;
 
       if (!navigator.geolocation) {
-        gpsStatusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1 text-rose-500"></i> Perangkat tidak mendukung GPS.`;
+        gpsStatusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1 text-rose-500"></i> GPS tidak didukung browser.`;
         gpsStatusEl.className = "text-xs font-semibold text-rose-600 bg-rose-50 py-1.5 px-3 rounded-lg border border-rose-200";
         return;
       }
@@ -600,15 +642,15 @@
           userDistanceInMeters = calculateDistance(lat, lng, SCHOOL_LAT, SCHOOL_LNG);
 
           if (userDistanceInMeters <= MAX_ALLOWED_DISTANCE_METERS) {
-            gpsStatusEl.innerHTML = `<i class="fa-solid fa-circle-check mr-1 text-emerald-600"></i> Dalam Radius Sekolah (${userDistanceInMeters} meter)`;
+            gpsStatusEl.innerHTML = `<i class="fa-solid fa-circle-check mr-1 text-emerald-600"></i> Dalam Radius Sekolah (${userDistanceInMeters}m)`;
             gpsStatusEl.className = "text-xs font-semibold text-emerald-600 bg-emerald-50 py-1.5 px-3 rounded-lg border border-emerald-200";
           } else {
-            gpsStatusEl.innerHTML = `<i class="fa-solid fa-circle-info mr-1 text-blue-600"></i> Di luar radius (${userDistanceInMeters}m). Absen Hadir wajib dalam 150m.`;
+            gpsStatusEl.innerHTML = `<i class="fa-solid fa-circle-info mr-1 text-blue-600"></i> Luar radius (${userDistanceInMeters}m). Absen lokasi <${MAX_ALLOWED_DISTANCE_METERS}m.`;
             gpsStatusEl.className = "text-xs font-semibold text-blue-600 bg-blue-50 py-1.5 px-3 rounded-lg border border-blue-200";
           }
         },
         (error) => {
-          gpsStatusEl.innerHTML = `<i class="fa-solid fa-location-crosshairs mr-1 text-amber-600"></i> Aktifkan izin lokasi/GPS di browser HP.`;
+          gpsStatusEl.innerHTML = `<i class="fa-solid fa-location-crosshairs mr-1 text-amber-600"></i> Mohon izinkan akses lokasi GPS.`;
           gpsStatusEl.className = "text-xs font-semibold text-amber-600 bg-amber-50 py-1.5 px-3 rounded-lg border border-amber-200";
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -675,8 +717,8 @@
     try {
       firebase.initializeApp(firebaseConfig);
       db = firebase.database();
-      document.getElementById('firebase-status').innerText = "Terhubung Online";
-      document.getElementById('firebase-status').className = "text-[10px] text-emerald-300 bg-emerald-950 px-2.5 py-1 rounded border border-emerald-800";
+      document.getElementById('firebase-status').innerText = "Online";
+      document.getElementById('firebase-status').className = "text-[10px] text-emerald-300 bg-emerald-950 px-2 py-1 rounded border border-emerald-800 font-bold";
     } catch (e) {
       document.getElementById('firebase-status').innerText = "Mode Lokal";
     }
@@ -762,19 +804,21 @@
 
     let selectedDate = "";
     let currentDay = "SENIN";
+    let activeView = "ABSENSI_HARIAN";
     let attendanceRecords = {};
 
     function initApp() {
-      const today = new Date();
-      selectedDate = today.toISOString().split('T')[0];
+      const effectiveToday = getEffectiveDate();
+      selectedDate = effectiveToday.toISOString().split('T')[0];
+      
       document.getElementById('attendance-date').value = selectedDate;
       document.getElementById('select-bulan').value = selectedDate.slice(0, 7);
       
       const optionsDate = { day: 'numeric', month: 'long', year: 'numeric' };
-      document.getElementById('print-current-date').innerText = today.toLocaleDateString('id-ID', optionsDate);
+      document.getElementById('print-current-date').innerText = effectiveToday.toLocaleDateString('id-ID', optionsDate);
 
-      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
-      document.getElementById('guru-history-start').value = firstDay;
+      // Mulai tanggal riwayat guru dari 20 Oktober 2026
+      document.getElementById('guru-history-start').value = "2026-10-20";
       document.getElementById('guru-history-end').value = selectedDate;
 
       if (currentUser.role !== 'KEPSEK') {
@@ -795,14 +839,14 @@
         db.ref('absensi_guru').on('value', (snapshot) => {
           const serverData = snapshot.val();
           attendanceRecords = serverData ? serverData : {};
-          updateDateAndDay(today);
+          updateDateAndDay(new Date(selectedDate + "T00:00:00"));
           if (currentUser.role !== 'KEPSEK') renderGuruHistoryTable();
         });
         db.ref('leave_requests').on('value', (snapshot) => {
           const reqs = snapshot.val();
           leaveRequests = reqs ? Object.values(reqs) : [];
           updatePendingBadge();
-          if (currentDay === 'APPROVAL_IZIN') renderLeaveRequestsTable();
+          if (activeView === 'APPROVAL_IZIN') renderLeaveRequestsTable();
         });
         db.ref('accounts_config').on('value', (snapshot) => {
           const serverAcc = snapshot.val();
@@ -829,7 +873,7 @@
         });
       } else {
         loadAccountsFromStorage();
-        updateDateAndDay(today);
+        updateDateAndDay(effectiveToday);
         if (currentUser.role !== 'KEPSEK') renderGuruHistoryTable();
       }
     }
@@ -882,11 +926,13 @@
     function updatePendingBadge() {
       const pendingCount = leaveRequests.filter(r => r.status === 'PENDING').length;
       const badge = document.getElementById('pending-badge');
-      if (pendingCount > 0) {
-        badge.innerText = pendingCount;
-        badge.classList.remove('hidden');
-      } else {
-        badge.classList.add('hidden');
+      if (badge) {
+        if (pendingCount > 0) {
+          badge.innerText = pendingCount;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
       }
     }
 
@@ -896,7 +942,7 @@
       tbody.innerHTML = '';
 
       if (leaveRequests.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 font-medium">Belum ada data pengajuan izin/sakit.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 font-medium">Belum ada data pengajuan izin/sakit.</td></tr>`;
         return;
       }
 
@@ -916,13 +962,13 @@
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
         tr.innerHTML = `
-          <td class="p-4 text-center font-semibold text-slate-500">${idx + 1}</td>
-          <td class="p-4 font-bold text-slate-800">${req.name}</td>
-          <td class="p-4 text-center font-semibold text-blue-600">${req.type}</td>
-          <td class="p-4 text-slate-600 font-medium text-xs">${req.startDate} s.d ${req.endDate}</td>
-          <td class="p-4 text-slate-600 text-xs">${req.reason}</td>
-          <td class="p-4 text-center"><span class="px-2.5 py-1 text-xs rounded-full border font-bold ${badgeClass}">${req.status}</span></td>
-          <td class="p-4 text-center">${actionBtns}</td>
+          <td class="p-3 text-center font-semibold text-slate-500">${idx + 1}</td>
+          <td class="p-3 font-bold text-slate-800">${req.name}</td>
+          <td class="p-3 text-center font-semibold text-blue-600">${req.type}</td>
+          <td class="p-3 text-slate-600 font-medium text-xs">${req.startDate} s.d ${req.endDate}</td>
+          <td class="p-3 text-slate-600 text-xs">${req.reason}</td>
+          <td class="p-3 text-center"><span class="px-2.5 py-0.5 text-[11px] rounded-full border font-bold ${badgeClass}">${req.status}</span></td>
+          <td class="p-3 text-center">${actionBtns}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -1022,7 +1068,48 @@
       succEl.innerText = "Password Anda berhasil diperbarui!";
       succEl.classList.remove('hidden');
 
-      setTimeout(() => closeChangePassModal(), 1500);
+      setTimeout(() => closeChangePassModal(), 1200);
+    }
+
+    function openEditAccountModal(username) {
+      if (currentUser.role !== 'KEPSEK') return;
+      const acc = accounts[username];
+      if (!acc) return;
+
+      document.getElementById('edit-acc-username').value = username;
+      document.getElementById('edit-acc-user-display').value = username;
+      document.getElementById('edit-acc-name').value = acc.name;
+      document.getElementById('edit-acc-role').value = acc.role;
+      document.getElementById('edit-acc-pass').value = acc.pass;
+
+      document.getElementById('edit-account-modal').classList.remove('hidden');
+    }
+
+    function closeEditAccountModal() {
+      document.getElementById('edit-account-modal').classList.add('hidden');
+    }
+
+    function saveAccountChangesByKepsek() {
+      const u = document.getElementById('edit-acc-username').value;
+      const name = document.getElementById('edit-acc-name').value.trim().toUpperCase();
+      const role = document.getElementById('edit-acc-role').value.trim().toUpperCase();
+      const pass = document.getElementById('edit-acc-pass').value.trim();
+
+      if (!name || !role || !pass) {
+        alert("Semua kolom tidak boleh kosong!");
+        return;
+      }
+
+      if (accounts[u]) {
+        accounts[u].name = name;
+        accounts[u].role = role;
+        accounts[u].pass = pass;
+        saveAccountsData();
+        populateTeacherSelectDropdown();
+        renderAccountsTable();
+        closeEditAccountModal();
+        alert(`Data & password akun "${u}" berhasil diperbarui!`);
+      }
     }
 
     function switchGuruView(view) {
@@ -1034,13 +1121,13 @@
       if (view === 'TODAY') {
         attSec.classList.remove('hidden');
         histSec.classList.add('hidden');
-        btnToday.className = "px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition flex items-center space-x-1";
-        btnHist.className = "px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition flex items-center space-x-1";
+        btnToday.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition flex items-center space-x-1";
+        btnHist.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg text-slate-600 hover:bg-slate-100 transition flex items-center space-x-1";
       } else {
         attSec.classList.add('hidden');
         histSec.classList.remove('hidden');
-        btnHist.className = "px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition flex items-center space-x-1";
-        btnToday.className = "px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition flex items-center space-x-1";
+        btnHist.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition flex items-center space-x-1";
+        btnToday.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg text-slate-600 hover:bg-slate-100 transition flex items-center space-x-1";
         renderGuruHistoryTable();
       }
     }
@@ -1068,13 +1155,12 @@
       }
 
       if (currentUser && currentUser.role === 'KEPSEK') {
-        renderDayTabs();
         document.getElementById('manage-schedule-title').innerText = `Kelola Tugas Guru Harian (${currentDay})`;
-        if (currentDay === 'REKAP_BULAN') {
+        if (activeView === 'REKAP_BULAN') {
           renderRekapBulananTable();
-        } else if (currentDay === 'MANAGE_ACCOUNTS') {
+        } else if (activeView === 'MANAGE_ACCOUNTS') {
           renderAccountsTable();
-        } else if (currentDay === 'APPROVAL_IZIN') {
+        } else if (activeView === 'APPROVAL_IZIN') {
           renderLeaveRequestsTable();
         } else {
           renderAttendanceTable();
@@ -1085,13 +1171,18 @@
     }
 
     function setStatus(personId, status) {
+      if (currentUser.role !== 'KEPSEK' && status === 'Alpa') {
+        alert("Akses ditolak: Tombol Alpa hanya dapat diakses oleh Kepala Sekolah.");
+        return;
+      }
+
       if (currentUser.role !== 'KEPSEK' && (status === 'Hadir' || status === 'Terlambat')) {
         if (!userLocation) {
-          alert("Gagal mencatat! Mohon aktifkan GPS/Lokasi perangkat Anda terlebih dahulu untuk absen Hadir/Terlambat.");
+          alert("Gagal mencatat! Mohon aktifkan GPS/Lokasi perangkat Anda terlebih dahulu.");
           return;
         }
         if (userDistanceInMeters > MAX_ALLOWED_DISTANCE_METERS) {
-          alert(`Anda berada di luar radius sekolah (${userDistanceInMeters}m dari titik lokasi). Jarak maksimal untuk absen Hadir/Terlambat adalah ${MAX_ALLOWED_DISTANCE_METERS} meter.`);
+          alert(`Anda berada di luar radius sekolah (${userDistanceInMeters}m). Maksimal jarak untuk absen adalah ${MAX_ALLOWED_DISTANCE_METERS} meter.`);
           return;
         }
       }
@@ -1102,7 +1193,7 @@
       const currentStatus = attendanceRecords[selectedDate][personId].status;
 
       if (currentStatus === status && currentUser.role === 'KEPSEK') {
-        attendanceRecords[selectedDate][personId].status = '';
+        attendanceRecords[selectedDate][personId].status = 'Reset';
         attendanceRecords[selectedDate][personId].time = '-';
       } else {
         const currentTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
@@ -1112,7 +1203,7 @@
       
       saveData();
       if (currentUser.role === 'KEPSEK') {
-        if (currentDay === 'REKAP_BULAN') renderRekapBulananTable();
+        if (activeView === 'REKAP_BULAN') renderRekapBulananTable();
         else renderAttendanceTable();
       } else {
         renderAttendanceTable();
@@ -1125,7 +1216,7 @@
       if (!attendanceRecords[selectedDate]) attendanceRecords[selectedDate] = {};
       if (!attendanceRecords[selectedDate][personId]) attendanceRecords[selectedDate][personId] = {};
 
-      attendanceRecords[selectedDate][personId].status = '';
+      attendanceRecords[selectedDate][personId].status = 'Reset';
       attendanceRecords[selectedDate][personId].time = '-';
       saveData();
       renderAttendanceTable();
@@ -1133,7 +1224,7 @@
 
     function removeTeacherFromSchedule(personId) {
       if (currentUser.role !== 'KEPSEK') return;
-      if (["MINGGU", "REKAP_BULAN", "MANAGE_ACCOUNTS", "APPROVAL_IZIN"].includes(currentDay)) return;
+      if (currentDay === "MINGGU") return;
 
       if (!scheduleData[currentDay]) return;
 
@@ -1141,14 +1232,13 @@
         scheduleData[currentDay] = scheduleData[currentDay].filter(p => p.id !== personId);
         saveScheduleData();
         renderAttendanceTable();
-        alert("Guru berhasil dihapus dari jadwal harian!");
       }
     }
 
     function addTeacherToCurrentDaySchedule() {
       if (currentUser.role !== 'KEPSEK') return;
-      if (["MINGGU", "REKAP_BULAN", "MANAGE_ACCOUNTS", "APPROVAL_IZIN"].includes(currentDay)) {
-        alert("Pilih hari aktif (Senin - Sabtu) terlebih dahulu!");
+      if (currentDay === "MINGGU") {
+        alert("Hari Minggu adalah hari libur!");
         return;
       }
 
@@ -1160,7 +1250,7 @@
 
       const exists = scheduleData[currentDay].some(p => p.id === username);
       if (exists) {
-        alert("Guru tersebut sudah ada dalam jadwal tugas hari ini!");
+        alert("Guru tersebut sudah ada dalam jadwal hari ini!");
         return;
       }
 
@@ -1196,15 +1286,35 @@
         return;
       }
 
-      if (confirm(`Apakah Anda yakin ingin mereset seluruh status absensi pada bulan ${bulanVal}? Semua data kehadiran dan alpa akan dikosongkan total.`)) {
-        Object.keys(attendanceRecords).forEach(tgl => {
-          if (tgl.startsWith(bulanVal)) {
-            delete attendanceRecords[tgl];
+      if (confirm(`Apakah Anda yakin ingin mereset/mengosongkan semua data absensi pada bulan ${bulanVal}? Semua hitungan akan menjadi 0.`)) {
+        const [yearStr, monthStr] = bulanVal.split('-');
+        const year = parseInt(yearStr);
+        const month = parseInt(monthStr) - 1;
+        const totalDays = new Date(year, month + 1, 0).getDate();
+        const daysMap = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
+
+        for (let d = 1; d <= totalDays; d++) {
+          const tglStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          const dateObj = new Date(year, month, d);
+          const dayName = daysMap[dateObj.getDay()];
+
+          if (dayName !== "MINGGU") {
+            const dayScheduleList = scheduleData[dayName] || [];
+            if (!attendanceRecords[tglStr]) attendanceRecords[tglStr] = {};
+            
+            dayScheduleList.forEach(person => {
+              attendanceRecords[tglStr][person.id] = {
+                status: 'Reset',
+                time: '-',
+                note: ''
+              };
+            });
           }
-        });
+        }
+
         saveData();
         renderRekapBulananTable();
-        alert("Semua data absensi dan rekap bulanan berhasil direset menjadi 0!");
+        alert(`Berhasil! Data absensi bulan ${bulanVal} telah direset menjadi 0.`);
       }
     }
 
@@ -1216,9 +1326,18 @@
       saveData();
     }
 
-    function switchDay(day) {
-      currentDay = day;
-      renderDayTabs();
+    function switchView(view) {
+      activeView = view;
+
+      const btnAbsensi = document.getElementById('nav-btn-absensi');
+      const btnIzin = document.getElementById('nav-btn-izin');
+      const btnRekap = document.getElementById('nav-btn-rekap');
+      const btnAccounts = document.getElementById('nav-btn-accounts');
+
+      if (btnAbsensi) btnAbsensi.className = "day-tab px-3.5 py-1.5 text-xs font-bold rounded-lg text-slate-600 hover:bg-slate-100 transition";
+      if (btnIzin) btnIzin.className = "day-tab px-3.5 py-1.5 text-xs font-bold rounded-lg bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition relative";
+      if (btnRekap) btnRekap.className = "day-tab px-3.5 py-1.5 text-xs font-bold rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition";
+      if (btnAccounts) btnAccounts.className = "day-tab px-3.5 py-1.5 text-xs font-bold rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition";
 
       const attSec = document.getElementById('attendance-section');
       const rekapSec = document.getElementById('rekap-bulan-section');
@@ -1230,39 +1349,24 @@
       accSec.classList.add('hidden');
       appSec.classList.add('hidden');
 
-      if (day === 'REKAP_BULAN') {
+      if (view === 'REKAP_BULAN') {
+        if (btnRekap) btnRekap.className = "day-tab px-3.5 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 text-white transition";
         rekapSec.classList.remove('hidden');
         renderRekapBulananTable();
-      } else if (day === 'MANAGE_ACCOUNTS') {
+      } else if (view === 'MANAGE_ACCOUNTS') {
+        if (btnAccounts) btnAccounts.className = "day-tab px-3.5 py-1.5 text-xs font-bold rounded-lg bg-amber-600 text-white transition";
         accSec.classList.remove('hidden');
         renderAccountsTable();
-      } else if (day === 'APPROVAL_IZIN') {
+      } else if (view === 'APPROVAL_IZIN') {
+        if (btnIzin) btnIzin.className = "day-tab px-3.5 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white transition relative";
         appSec.classList.remove('hidden');
         renderLeaveRequestsTable();
       } else {
+        if (btnAbsensi) btnAbsensi.className = "day-tab px-3.5 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition";
         attSec.classList.remove('hidden');
-        document.getElementById('manage-schedule-title').innerText = `Kelola Tugas Guru Harian (${day})`;
-        document.getElementById('selected-day-title').innerText = `HARI ${day}`;
+        document.getElementById('manage-schedule-title').innerText = `Kelola Tugas Guru Harian (${currentDay})`;
         renderAttendanceTable();
       }
-    }
-
-    function renderDayTabs() {
-      const tabs = document.querySelectorAll('.day-tab');
-      tabs.forEach(tab => {
-        tab.className = "day-tab px-4 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition";
-        if (tab.getAttribute('onclick').includes(currentDay)) {
-          if (currentDay === 'REKAP_BULAN') {
-            tab.className = "day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-emerald-600 text-white transition";
-          } else if (currentDay === 'MANAGE_ACCOUNTS') {
-            tab.className = "day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white transition";
-          } else if (currentDay === 'APPROVAL_IZIN') {
-            tab.className = "day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 text-white transition relative";
-          } else {
-            tab.className = "day-tab px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white transition";
-          }
-        }
-      });
     }
 
     function renderAttendanceTable() {
@@ -1274,7 +1378,7 @@
 
       const manageScheduleEl = document.getElementById('manage-schedule-container');
       if (currentUser && currentUser.role === 'KEPSEK') {
-        if (["MINGGU", "REKAP_BULAN", "MANAGE_ACCOUNTS", "APPROVAL_IZIN"].includes(currentDay)) {
+        if (currentDay === "MINGGU" || activeView !== "ABSENSI_HARIAN") {
           manageScheduleEl.classList.add('hidden');
         } else {
           manageScheduleEl.classList.remove('hidden');
@@ -1282,7 +1386,7 @@
       }
 
       if (currentDay === "MINGGU") {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400 font-medium">Hari Minggu adalah hari libur. Tidak ada absensi.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 font-medium">Hari Minggu adalah hari libur sekolah. Tidak ada absensi.</td></tr>`;
         return;
       }
 
@@ -1293,14 +1397,22 @@
         list = [{ id: currentUser.username, role: currentUser.role }];
       }
 
-      let counts = { Hadir: 0, Terlambat: 0, Izin: 0, Sakit: 0, Alpa: 0 };
+      let counts = { Hadir: 0, Terlambat: 0, Izin: 0, Sakit: 0, Alpa: 0, Reset: 0 };
       const dayData = attendanceRecords[selectedDate] || {};
+
+      const selectedDateObj = new Date(selectedDate + "T00:00:00");
+      const isBeforeStart = selectedDateObj < START_ABSENSI_DATE;
 
       let filteredList = list.filter(person => {
         const accInfo = accounts[person.id] || { name: 'Tidak Dikenal', role: person.role };
         const record = dayData[person.id] || {};
         const currentStatus = record.status || '';
-        const effectiveStatus = currentStatus === '' ? 'Alpa' : currentStatus;
+        
+        // Sebelum tanggal 20 Oktober 2026, status yang kosong tidak dihitung sebagai Alpa otomatis
+        let effectiveStatus = currentStatus;
+        if (currentStatus === '') {
+          effectiveStatus = isBeforeStart ? 'Reset' : 'Alpa';
+        }
 
         if (counts[effectiveStatus] !== undefined) counts[effectiveStatus]++;
 
@@ -1319,7 +1431,7 @@
       }
 
       if (filteredList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400 font-medium">Tidak ada data guru yang sesuai.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 font-medium">Tidak ada data guru yang sesuai.</td></tr>`;
         return;
       }
 
@@ -1335,37 +1447,34 @@
 
         let actionsHtml = '';
         if (currentUser.role === 'KEPSEK') {
-          // Kepala sekolah memiliki akses penuh mengubah semua status
           actionsHtml = `
-            <div class="flex justify-center items-center gap-1.5 flex-wrap">
-              <button onclick="setStatus('${person.id}', 'Hadir')" class="status-btn px-2.5 py-1 text-xs rounded-lg border font-semibold ${activeSt === 'Hadir' ? 'active-hadir' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">Hadir</button>
-              <button onclick="setStatus('${person.id}', 'Terlambat')" class="status-btn px-2.5 py-1 text-xs rounded-lg border font-semibold ${activeSt === 'Terlambat' ? 'active-terlambat' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">Terlambat</button>
-              <button onclick="setStatus('${person.id}', 'Izin')" class="status-btn px-2.5 py-1 text-xs rounded-lg border font-semibold ${activeSt === 'Izin' ? 'active-izin' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">Izin</button>
-              <button onclick="setStatus('${person.id}', 'Sakit')" class="status-btn px-2.5 py-1 text-xs rounded-lg border font-semibold ${activeSt === 'Sakit' ? 'active-sakit' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">Sakit</button>
-              <button onclick="setStatus('${person.id}', 'Alpa')" class="status-btn px-2.5 py-1 text-xs rounded-lg border font-semibold ${activeSt === 'Alpa' ? 'active-alpa' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">Alpa</button>
+            <div class="flex justify-center items-center gap-1 flex-wrap">
+              <button onclick="setStatus('${person.id}', 'Hadir')" class="status-btn px-2 py-1 text-xs rounded-md border font-semibold ${activeSt === 'Hadir' ? 'active-hadir' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">Hadir</button>
+              <button onclick="setStatus('${person.id}', 'Terlambat')" class="status-btn px-2 py-1 text-xs rounded-md border font-semibold ${activeSt === 'Terlambat' ? 'active-terlambat' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">Terlambat</button>
+              <button onclick="setStatus('${person.id}', 'Izin')" class="status-btn px-2 py-1 text-xs rounded-md border font-semibold ${activeSt === 'Izin' ? 'active-izin' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">Izin</button>
+              <button onclick="setStatus('${person.id}', 'Sakit')" class="status-btn px-2 py-1 text-xs rounded-md border font-semibold ${activeSt === 'Sakit' ? 'active-sakit' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">Sakit</button>
+              <button onclick="setStatus('${person.id}', 'Alpa')" class="status-btn px-2 py-1 text-xs rounded-md border font-semibold ${activeSt === 'Alpa' ? 'active-alpa' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">Alpa</button>
               <button onclick="resetAttendance('${person.id}')" title="Reset Status" class="p-1 text-slate-400 hover:text-rose-600 ml-1"><i class="fa-solid fa-rotate-left"></i></button>
-              <button onclick="removeTeacherFromSchedule('${person.id}')" title="Hapus dari jadwal hari ini" class="p-1 text-slate-400 hover:text-rose-600 ml-1"><i class="fa-solid fa-trash"></i></button>
+              <button onclick="removeTeacherFromSchedule('${person.id}')" title="Hapus dari jadwal hari ini" class="p-1 text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button>
             </div>
           `;
         } else {
-          // Guru: Tombol Izin/Sakit dinonaktifkan (hanya bisa Hadir, Terlambat, Alpa mandiri atau mengajukan izin)
           actionsHtml = `
             <div class="flex justify-center items-center gap-1.5 flex-wrap">
-              <button onclick="setStatus('${person.id}', 'Hadir')" class="status-btn px-2.5 py-1 text-xs rounded-lg border font-semibold ${activeSt === 'Hadir' ? 'active-hadir' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">Hadir</button>
-              <button onclick="setStatus('${person.id}', 'Terlambat')" class="status-btn px-2.5 py-1 text-xs rounded-lg border font-semibold ${activeSt === 'Terlambat' ? 'active-terlambat' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">Terlambat</button>
-              <span class="text-[11px] text-blue-600 italic bg-blue-50 px-2 py-1 rounded border border-blue-200" title="Ajukan Izin/Sakit melalui tombol di atas">Izin/Sakit via Menu Pengajuan</span>
-              <button onclick="setStatus('${person.id}', 'Alpa')" class="status-btn px-2.5 py-1 text-xs rounded-lg border font-semibold ${activeSt === 'Alpa' ? 'active-alpa' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">Alpa</button>
+              <button onclick="setStatus('${person.id}', 'Hadir')" class="status-btn px-3 py-1 text-xs rounded-md border font-semibold ${activeSt === 'Hadir' ? 'active-hadir' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">Hadir</button>
+              <button onclick="setStatus('${person.id}', 'Terlambat')" class="status-btn px-3 py-1 text-xs rounded-md border font-semibold ${activeSt === 'Terlambat' ? 'active-terlambat' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">Terlambat</button>
+              <span class="text-[11px] text-blue-600 font-medium italic bg-blue-50 px-2 py-1 rounded border border-blue-200" title="Gunakan menu pengajuan izin">Izin/Sakit via Pengajuan</span>
             </div>
           `;
         }
 
         tr.innerHTML = `
-          <td class="p-4 text-center font-semibold text-slate-500">${index + 1}</td>
-          <td class="p-4 font-bold text-slate-800">${accInfo.name}</td>
-          <td class="p-4 font-medium text-slate-600">${accInfo.role}</td>
-          <td class="p-4 text-center">${actionsHtml}</td>
-          <td class="p-4 text-center font-mono text-xs text-slate-500">${timeVal}</td>
-          <td class="p-4">
+          <td class="p-3 text-center font-semibold text-slate-500">${index + 1}</td>
+          <td class="p-3 font-bold text-slate-800">${accInfo.name}</td>
+          <td class="p-3 font-medium text-slate-600">${accInfo.role}</td>
+          <td class="p-3 text-center">${actionsHtml}</td>
+          <td class="p-3 text-center font-mono text-xs text-slate-500">${timeVal}</td>
+          <td class="p-3">
             <input type="text" value="${noteVal}" onchange="setNote('${person.id}', this.value)" placeholder="Tulis catatan..." class="w-full px-2.5 py-1 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-600 bg-slate-50">
           </td>
         `;
@@ -1392,41 +1501,44 @@
       const daysMap = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
 
       while (currentDate <= endDate) {
-        const tglStr = currentDate.toISOString().split('T')[0];
-        const dayIndex = currentDate.getDay();
-        const dayName = daysMap[dayIndex];
+        // Hanya tampilkan riwayat jika tanggal >= 20 Oktober 2026
+        if (currentDate >= START_ABSENSI_DATE) {
+          const tglStr = currentDate.toISOString().split('T')[0];
+          const dayIndex = currentDate.getDay();
+          const dayName = daysMap[dayIndex];
 
-        if (dayName !== "MINGGU") {
-          // CEK APAKAH GURU TERSEBUT ADA JADWAL TUGAS PADA HARI TERSEBUT
-          const dayScheduleList = scheduleData[dayName] || [];
-          const hasSchedule = dayScheduleList.some(item => item.id === currentUser.username);
+          if (dayName !== "MINGGU") {
+            const dayScheduleList = scheduleData[dayName] || [];
+            const hasSchedule = dayScheduleList.some(item => item.id === currentUser.username);
 
-          if (hasSchedule) {
-            const dayData = attendanceRecords[tglStr] || {};
-            const record = dayData[currentUser.username] || { status: '', time: '-', note: '' };
-            const st = record.status || 'Alpa';
+            if (hasSchedule) {
+              const dayData = attendanceRecords[tglStr] || {};
+              const record = dayData[currentUser.username] || { status: '', time: '-', note: '' };
+              const st = record.status === '' ? 'Alpa' : record.status;
 
-            if (statusFilter === 'ALL' || st === statusFilter) {
-              let badgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
-              if (st === 'Hadir') badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-              else if (st === 'Terlambat') badgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
-              else if (st === 'Izin') badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
-              else if (st === 'Sakit') badgeClass = 'bg-purple-50 text-purple-700 border-purple-200';
+              if (statusFilter === 'ALL' || st === statusFilter) {
+                let badgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
+                if (st === 'Hadir') badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                else if (st === 'Terlambat') badgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+                else if (st === 'Izin') badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
+                else if (st === 'Sakit') badgeClass = 'bg-purple-50 text-purple-700 border-purple-200';
+                else if (st === 'Reset') badgeClass = 'bg-slate-100 text-slate-600 border-slate-300';
 
-              const formattedDate = currentDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                const formattedDate = currentDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 
-              rowsHtml += `
-                <tr class="hover:bg-slate-50 transition border-b border-slate-100">
-                  <td class="p-4 text-center font-semibold text-slate-500">${no++}</td>
-                  <td class="p-4 font-semibold text-slate-800">${formattedDate}</td>
-                  <td class="p-4 text-slate-600">${dayName}</td>
-                  <td class="p-4 text-center">
-                    <span class="px-3 py-1 rounded-full text-xs font-bold border ${badgeClass}">${st}</span>
-                  </td>
-                  <td class="p-4 text-center font-mono text-xs text-slate-500">${record.time || '-'}</td>
-                  <td class="p-4 text-slate-600 text-xs">${record.note || '-'}</td>
-                </tr>
-              `;
+                rowsHtml += `
+                  <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                    <td class="p-3 text-center font-semibold text-slate-500">${no++}</td>
+                    <td class="p-3 font-semibold text-slate-800">${formattedDate}</td>
+                    <td class="p-3 text-slate-600 font-medium">${dayName}</td>
+                    <td class="p-3 text-center">
+                      <span class="px-2.5 py-0.5 rounded-full text-xs font-bold border ${badgeClass}">${st}</span>
+                    </td>
+                    <td class="p-3 text-center font-mono text-xs text-slate-500">${record.time || '-'}</td>
+                    <td class="p-3 text-slate-600 text-xs">${record.note || '-'}</td>
+                  </tr>
+                `;
+              }
             }
           }
         }
@@ -1434,7 +1546,7 @@
       }
 
       if (rowsHtml === '') {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400 font-medium">Tidak ada riwayat absensi pada rentang tanggal tersebut.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 font-medium">Tidak ada riwayat absensi pada rentang tanggal tersebut.</td></tr>`;
       } else {
         tbody.innerHTML = rowsHtml;
       }
@@ -1448,6 +1560,21 @@
       const bulanVal = document.getElementById('select-bulan').value;
       if (!bulanVal) return;
 
+      const [yearStr, monthStr] = bulanVal.split('-');
+      const year = parseInt(yearStr);
+      const month = parseInt(monthStr) - 1;
+
+      const effectiveToday = getEffectiveDate();
+      const currentYear = effectiveToday.getFullYear();
+      const currentMonth = effectiveToday.getMonth();
+
+      let maxDayLimit;
+      if (year === currentYear && month === currentMonth) {
+        maxDayLimit = effectiveToday.getDate();
+      } else {
+        maxDayLimit = new Date(year, month + 1, 0).getDate();
+      }
+
       let no = 1;
       let rowsHtml = '';
 
@@ -1460,18 +1587,22 @@
         const acc = accounts[username];
         let cHadir = 0, cTerlambat = 0, cIzin = 0, cSakit = 0, cAlpa = 0;
 
-        Object.keys(attendanceRecords).forEach(tgl => {
-          if (tgl.startsWith(bulanVal)) {
-            const dateObj = new Date(tgl + "T00:00:00");
+        for (let d = 1; d <= maxDayLimit; d++) {
+          const dateObj = new Date(year, month, d);
+          
+          // Hanya hitung jika tanggal >= 20 Oktober 2026
+          if (dateObj >= START_ABSENSI_DATE) {
+            const tglStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
             const dayName = daysMap[dateObj.getDay()];
+
             if (dayName !== "MINGGU") {
               const dayScheduleList = scheduleData[dayName] || [];
               const hasSchedule = dayScheduleList.some(item => item.id === username);
 
-              // Hanya hitung jika guru tersebut terjadwal di hari itu
               if (hasSchedule) {
-                const rec = attendanceRecords[tgl] && attendanceRecords[tgl][username] ? attendanceRecords[tgl][username] : {};
+                const rec = attendanceRecords[tglStr] && attendanceRecords[tglStr][username] ? attendanceRecords[tglStr][username] : {};
                 const st = rec.status || 'Alpa';
+
                 if (st === 'Hadir') cHadir++;
                 else if (st === 'Terlambat') cTerlambat++;
                 else if (st === 'Izin') cIzin++;
@@ -1480,7 +1611,7 @@
               }
             }
           }
-        });
+        }
 
         totalHadir += cHadir;
         totalTerlambat += cTerlambat;
@@ -1493,15 +1624,15 @@
 
         rowsHtml += `
           <tr class="hover:bg-slate-50 transition border-b border-slate-100">
-            <td class="p-4 text-center font-semibold text-slate-500">${no++}</td>
-            <td class="p-4 font-bold text-slate-800">${acc.name}<br><span class="text-xs font-normal text-slate-500">${acc.role}</span></td>
-            <td class="p-4 text-center font-bold text-emerald-600">${cHadir}</td>
-            <td class="p-4 text-center font-bold text-amber-600">${cTerlambat}</td>
-            <td class="p-4 text-center font-bold text-blue-600">${cIzin}</td>
-            <td class="p-4 text-center font-bold text-purple-600">${cSakit}</td>
-            <td class="p-4 text-center font-bold text-rose-600">${cAlpa}</td>
-            <td class="p-4 text-center no-print">
-              <button onclick="openDetailModalPerson('${username}', '${acc.name}')" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition">
+            <td class="p-3.5 text-center font-semibold text-slate-500">${no++}</td>
+            <td class="p-3.5 font-bold text-slate-800">${acc.name}<br><span class="text-xs font-normal text-slate-500">${acc.role}</span></td>
+            <td class="p-3.5 text-center font-bold text-emerald-600">${cHadir}</td>
+            <td class="p-3.5 text-center font-bold text-amber-600">${cTerlambat}</td>
+            <td class="p-3.5 text-center font-bold text-blue-600">${cIzin}</td>
+            <td class="p-3.5 text-center font-bold text-purple-600">${cSakit}</td>
+            <td class="p-3.5 text-center font-bold text-rose-600">${cAlpa}</td>
+            <td class="p-3.5 text-center no-print">
+              <button onclick="openDetailModalPerson('${username}', '${acc.name}')" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold transition">
                 <i class="fa-solid fa-eye mr-1"></i> Detail
               </button>
             </td>
@@ -1510,7 +1641,7 @@
       });
 
       tbody.innerHTML = rowsHtml;
-      document.getElementById('print-info-rekap-bulan').innerText = `Periode Bulan: ${bulanVal}`;
+      document.getElementById('print-info-rekap-bulan').innerText = `Periode Bulan: ${bulanVal} (Mulai 20 Okt s/d Tgl ${maxDayLimit})`;
 
       renderAnalyticsCharts(
         [totalHadir, totalTerlambat, totalIzin, totalSakit, totalAlpa],
@@ -1541,7 +1672,7 @@
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } }
+            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }
           }
         }
       });
@@ -1554,15 +1685,15 @@
             label: 'Jumlah Hari Hadir',
             data: teacherHadirList,
             backgroundColor: '#6366F1',
-            borderRadius: 6
+            borderRadius: 5
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           scales: {
-            y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } },
-            x: { ticks: { font: { size: 9 }, maxRotation: 45 } }
+            y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 9 } } },
+            x: { ticks: { font: { size: 8 }, maxRotation: 45 } }
           },
           plugins: {
             legend: { display: false }
@@ -1582,28 +1713,39 @@
       body.innerHTML = '';
 
       const bulanVal = document.getElementById('select-bulan').value;
+      const [yearStr, monthStr] = bulanVal.split('-');
+      const year = parseInt(yearStr);
+      const month = parseInt(monthStr) - 1;
+
+      const effectiveToday = getEffectiveDate();
+      let maxDayLimit = (year === effectiveToday.getFullYear() && month === effectiveToday.getMonth()) 
+        ? effectiveToday.getDate() 
+        : new Date(year, month + 1, 0).getDate();
+
       let rows = '';
       const daysMap = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
 
-      Object.keys(attendanceRecords).sort().forEach(tgl => {
-        if (tgl.startsWith(bulanVal)) {
-          const dateObj = new Date(tgl + "T00:00:00");
+      for (let d = 1; d <= maxDayLimit; d++) {
+        const dateObj = new Date(year, month, d);
+        if (dateObj >= START_ABSENSI_DATE) {
+          const tglStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
           const dayName = daysMap[dateObj.getDay()];
+
           if (dayName !== "MINGGU") {
             const dayScheduleList = scheduleData[dayName] || [];
             const hasSchedule = dayScheduleList.some(item => item.id === username);
 
             if (hasSchedule) {
-              const rec = attendanceRecords[tgl] && attendanceRecords[tgl][username] ? attendanceRecords[tgl][username] : {};
+              const rec = attendanceRecords[tglStr] && attendanceRecords[tglStr][username] ? attendanceRecords[tglStr][username] : {};
               const st = rec.status || 'Alpa';
 
               rows += `
                 <tr class="border-b">
-                  <td class="p-3 font-semibold">${tgl}</td>
-                  <td class="p-3">${dayName}</td>
-                  <td class="p-3 font-bold">${st}</td>
-                  <td class="p-3 text-center">
-                    <select onchange="adminUpdateStatus('${tgl}', '${username}', this.value)" class="px-2 py-1 border rounded text-xs bg-white font-semibold">
+                  <td class="p-2.5 font-semibold">${tglStr}</td>
+                  <td class="p-2.5">${dayName}</td>
+                  <td class="p-2.5 font-bold">${st}</td>
+                  <td class="p-2.5 text-center">
+                    <select onchange="adminUpdateStatus('${tglStr}', '${username}', this.value)" class="px-2 py-1 border rounded text-xs bg-white font-semibold">
                       <option value="" disabled selected>Ubah Status...</option>
                       <option value="Hadir">Hadir</option>
                       <option value="Terlambat">Terlambat</option>
@@ -1617,9 +1759,9 @@
             }
           }
         }
-      });
+      }
 
-      body.innerHTML = rows || `<tr><td colspan="4" class="p-4 text-center text-slate-400">Belum ada data rincian.</td></tr>`;
+      body.innerHTML = rows || `<tr><td colspan="4" class="p-4 text-center text-slate-400">Belum ada rincian data (dimulai dari 20 Okt 2026).</td></tr>`;
       modal.classList.remove('hidden');
     }
 
@@ -1637,7 +1779,7 @@
       attendanceRecords[tgl][username].time = currentTime;
       saveData();
       renderRekapBulananTable();
-      alert("Status tanggal " + tgl + " berhasil diperbarui secara sinkron!");
+      alert(`Status tanggal ${tgl} untuk ${username} berhasil diperbarui!`);
     }
 
     function renderAccountsTable() {
@@ -1652,13 +1794,16 @@
         const acc = accounts[username];
         rows += `
           <tr class="hover:bg-slate-50 transition border-b border-slate-100">
-            <td class="p-4 text-center font-semibold text-slate-500">${no++}</td>
-            <td class="p-4 font-bold text-slate-800">${username}</td>
-            <td class="p-4 font-semibold text-slate-700">${acc.name}</td>
-            <td class="p-4 text-slate-600">${acc.role}</td>
-            <td class="p-4 font-mono text-xs text-slate-500">${acc.pass}</td>
-            <td class="p-4 text-center">
-              <button onclick="deleteAccount('${username}')" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-semibold transition">
+            <td class="p-3.5 text-center font-semibold text-slate-500">${no++}</td>
+            <td class="p-3.5 font-bold text-slate-800">${username}</td>
+            <td class="p-3.5 font-semibold text-slate-700">${acc.name}</td>
+            <td class="p-3.5 text-slate-600">${acc.role}</td>
+            <td class="p-3.5 font-mono text-xs text-indigo-700 font-bold bg-indigo-50/50 px-2 py-1 rounded inline-block my-2">${acc.pass}</td>
+            <td class="p-3.5 text-center space-x-1">
+              <button onclick="openEditAccountModal('${username}')" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition">
+                <i class="fa-solid fa-pen mr-1"></i> Edit
+              </button>
+              <button onclick="deleteAccount('${username}')" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-semibold transition">
                 <i class="fa-solid fa-trash mr-1"></i> Hapus
               </button>
             </td>
@@ -1771,53 +1916,64 @@
         return;
       }
 
-      const excelData = [];
-      let no = 1;
-      const daysMap = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
+      const [yearStr, monthStr] = bulanVal.split('-');
+      const year = parseInt(yearStr);
+      const month = parseInt(monthStr) - 1;
 
+      const effectiveToday = getEffectiveDate();
+      let maxDayLimit = (year === effectiveToday.getFullYear() && month === effectiveToday.getMonth()) 
+        ? effectiveToday.getDate() 
+        : new Date(year, month + 1, 0).getDate();
+
+      const daysMap = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
+      const dataToExport = [];
+
+      let no = 1;
       Object.keys(accounts).forEach(username => {
         const acc = accounts[username];
-        let cH = 0, cT = 0, cI = 0, cS = 0, cA = 0;
+        let cHadir = 0, cTerlambat = 0, cIzin = 0, cSakit = 0, cAlpa = 0;
 
-        Object.keys(attendanceRecords).forEach(tgl => {
-          if (tgl.startsWith(bulanVal)) {
-            const dObj = new Date(tgl + "T00:00:00");
-            const dayName = daysMap[dObj.getDay()];
+        for (let d = 1; d <= maxDayLimit; d++) {
+          const dateObj = new Date(year, month, d);
+          if (dateObj >= START_ABSENSI_DATE) {
+            const tglStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const dayName = daysMap[dateObj.getDay()];
+
             if (dayName !== "MINGGU") {
               const dayScheduleList = scheduleData[dayName] || [];
               const hasSchedule = dayScheduleList.some(item => item.id === username);
 
               if (hasSchedule) {
-                const rec = attendanceRecords[tgl] && attendanceRecords[tgl][username] ? attendanceRecords[tgl][username] : {};
+                const rec = attendanceRecords[tglStr] && attendanceRecords[tglStr][username] ? attendanceRecords[tglStr][username] : {};
                 const st = rec.status || 'Alpa';
-                if (st === 'Hadir') cH++;
-                else if (st === 'Terlambat') cT++;
-                else if (st === 'Izin') cI++;
-                else if (st === 'Sakit') cS++;
-                else if (st === 'Alpa') cA++;
+
+                if (st === 'Hadir') cHadir++;
+                else if (st === 'Terlambat') cTerlambat++;
+                else if (st === 'Izin') cIzin++;
+                else if (st === 'Sakit') cSakit++;
+                else if (st === 'Alpa') cAlpa++;
               }
             }
           }
-        });
+        }
 
-        excelData.push({
+        dataToExport.push({
           "No": no++,
-          "Nama Guru / Staf": acc.name,
-          "Jabatan / Role": acc.role,
-          "Hadir": cH,
-          "Terlambat": cT,
-          "Izin": cI,
-          "Sakit": cS,
-          "Alpa": cA,
-          "Total Kehadiran": (cH + cT)
+          "Nama Guru/Staf": acc.name,
+          "Jabatan": acc.role,
+          "Hadir": cHadir,
+          "Terlambat": cTerlambat,
+          "Izin": cIzin,
+          "Sakit": cSakit,
+          "Alpa": cAlpa
         });
       });
 
-      const worksheet = XLSX.utils.json_to_sheet(excelData);
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap Absensi");
 
-      XLSX.writeFile(workbook, `Rekap_Absensi_SMA_Azmanawadi_${bulanVal}.xlsx`);
+      XLSX.writeFile(workbook, `Rekap_Absensi_${bulanVal}.xlsx`);
     }
   </script>
 </body>
