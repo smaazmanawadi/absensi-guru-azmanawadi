@@ -245,13 +245,9 @@
 
         <!-- Guru Navigation -->
         <div class="flex flex-wrap gap-2 hidden" id="guru-nav">
-          <button id="guru-tab-today" onclick="switchGuruView('TODAY')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition flex items-center space-x-1">
+          <button id="guru-tab-today" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition flex items-center space-x-1">
             <i class="fa-solid fa-calendar-check mr-1"></i>
             <span>Absen Hari Ini</span>
-          </button>
-          <button id="guru-tab-history" onclick="switchGuruView('HISTORY')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg text-slate-600 hover:bg-slate-100 transition flex items-center space-x-1">
-            <i class="fa-solid fa-clock-rotate-left mr-1"></i>
-            <span>Riwayat Absensi Saya</span>
           </button>
           <button onclick="openLeaveModal()" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition flex items-center space-x-1">
             <i class="fa-solid fa-paper-plane mr-1"></i>
@@ -287,7 +283,7 @@
               <option value="Izin">Izin</option>
               <option value="Sakit">Sakit</option>
               <option value="Alpa">Alpa</option>
-              <option value="Reset">Reset (0)</option>
+              <option value="Belum Diabsen">Belum Diabsen</option>
             </select>
           </div>
 
@@ -337,58 +333,6 @@
                 <span>Tambahkan ke Jadwal</span>
               </button>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Riwayat Absensi Saya (Guru View) -->
-      <div id="guru-history-section" class="space-y-4 hidden">
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-3">
-          <div>
-            <h2 class="text-lg font-bold text-slate-800">Riwayat Kehadiran Saya</h2>
-            <p class="text-xs text-slate-500">Rekapitulasi tanggal & status absensi Anda.</p>
-          </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <div>
-              <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-0.5">Dari Tanggal</label>
-              <input type="date" id="guru-history-start" onchange="renderGuruHistoryTable()" class="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 font-semibold bg-slate-50">
-            </div>
-            <div>
-              <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-0.5">Sampai Tanggal</label>
-              <input type="date" id="guru-history-end" onchange="renderGuruHistoryTable()" class="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 font-semibold bg-slate-50">
-            </div>
-            <div>
-              <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-0.5">Status</label>
-              <select id="guru-history-status" onchange="renderGuruHistoryTable()" class="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-600 font-semibold bg-slate-50">
-                <option value="ALL">Semua Status</option>
-                <option value="Hadir">Hadir</option>
-                <option value="Terlambat">Terlambat</option>
-                <option value="Izin">Izin</option>
-                <option value="Sakit">Sakit</option>
-                <option value="Alpa">Alpa</option>
-                <option value="Reset">Reset (0)</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs md:text-sm">
-              <thead>
-                <tr class="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase tracking-wider">
-                  <th class="p-3.5 w-10 text-center">No</th>
-                  <th class="p-3.5">Tanggal</th>
-                  <th class="p-3.5">Hari</th>
-                  <th class="p-3.5 text-center">Status</th>
-                  <th class="p-3.5 text-center">Jam Absen</th>
-                  <th class="p-3.5">Catatan</th>
-                </tr>
-              </thead>
-              <tbody id="guru-history-body" class="divide-y divide-slate-100">
-                <!-- JS Populated -->
-              </tbody>
-            </table>
           </div>
         </div>
       </div>
@@ -567,16 +511,16 @@
     let accounts = {
       'kepsek': { pass: 'Belza2021', role: 'KEPSEK', name: 'M. IDRIK RAHMAN, MA' },
       'mursidin': { pass: '123456', role: 'WAKASIS', name: 'MURSIDIN, S.PD., GR' },
-      'awaludin': { pass: '123456', role: 'WAKAKURMAS', name: 'AWALUDIN, S.PD., GR' },
+      'awaludin': { pass: '123456', role: 'WAKAKURMAS', name: 'AWALUDIN, S.PD.I., GR' },
       'rosi': { pass: '123456', role: 'WAKASARPRAS', name: 'L. YULIZARROSI, S.PD., GR' },
       'susilawati': { pass: '123456', role: 'TU', name: 'SUSILAWATI, S.PD' },
       'salwa': { pass: '123456', role: 'GURU/BENDAHARA', name: 'SALIMATUL HUZWATI, S.PD' },
       'lilis': { pass: '123456', role: 'GURU', name: 'LISRATUL AENY, S.KOM' },
       'miniah': { pass: '123456', role: 'GURU', name: 'MINIAH, S.PD' },
       'bukhori': { pass: '123456', role: 'GURU/OP', name: 'BUKHORI ABDILLAH, S.PD' },
-      'pandi': { pass: '123456', role: 'GURU', name: 'ALPANDI ALANSORI, S.PD' },
+      'pandi': { pass: '123456', role: 'GURU', name: 'ALPANDI ALANSORI, S.PD., GR' },
       'anwari': { pass: '123456', role: 'GURU', name: 'MATHLAUL ANWARI, S.PD' },
-      'nurul': { pass: '123456', role: 'GURU', name: 'NURUL HIDAYATI, S.PD' },
+      'nurul': { pass: '123456', role: 'GURU', name: 'NURUL HIDAYATI, SE., GR' },
       'jihad': { pass: '123456', role: 'GURU', name: 'M. NURUL JIHAD, S.PD' },
       'abdullah': { pass: '123456', role: 'GURU', name: 'M. ABDULLAH, S.PD' },
       'dewi': { pass: '123456', role: 'GURU', name: 'BQ. DEWI PUSPITASARI, S.PD' },
@@ -597,7 +541,6 @@
     const SCHOOL_LNG = 116.424538; 
     const MAX_ALLOWED_DISTANCE_METERS = 250; 
 
-    // Tanggal acuan awal mulai hitungan absensi
     const START_ABSENSI_DATE = new Date("2026-10-20T00:00:00");
 
     function getEffectiveDate() {
@@ -817,10 +760,6 @@
       const optionsDate = { day: 'numeric', month: 'long', year: 'numeric' };
       document.getElementById('print-current-date').innerText = effectiveToday.toLocaleDateString('id-ID', optionsDate);
 
-      // Mulai tanggal riwayat guru dari 20 Oktober 2026
-      document.getElementById('guru-history-start').value = "2026-10-20";
-      document.getElementById('guru-history-end').value = selectedDate;
-
       if (currentUser.role !== 'KEPSEK') {
         document.getElementById('kepsek-nav').classList.add('hidden');
         document.getElementById('guru-nav').classList.remove('hidden');
@@ -840,7 +779,7 @@
           const serverData = snapshot.val();
           attendanceRecords = serverData ? serverData : {};
           updateDateAndDay(new Date(selectedDate + "T00:00:00"));
-          if (currentUser.role !== 'KEPSEK') renderGuruHistoryTable();
+          if (currentUser.role === 'KEPSEK' && activeView === 'REKAP_BULAN') renderRekapBulananTable();
         });
         db.ref('leave_requests').on('value', (snapshot) => {
           const reqs = snapshot.val();
@@ -874,7 +813,6 @@
       } else {
         loadAccountsFromStorage();
         updateDateAndDay(effectiveToday);
-        if (currentUser.role !== 'KEPSEK') renderGuruHistoryTable();
       }
     }
 
@@ -1112,26 +1050,6 @@
       }
     }
 
-    function switchGuruView(view) {
-      const attSec = document.getElementById('attendance-section');
-      const histSec = document.getElementById('guru-history-section');
-      const btnToday = document.getElementById('guru-tab-today');
-      const btnHist = document.getElementById('guru-tab-history');
-
-      if (view === 'TODAY') {
-        attSec.classList.remove('hidden');
-        histSec.classList.add('hidden');
-        btnToday.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition flex items-center space-x-1";
-        btnHist.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg text-slate-600 hover:bg-slate-100 transition flex items-center space-x-1";
-      } else {
-        attSec.classList.add('hidden');
-        histSec.classList.remove('hidden');
-        btnHist.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition flex items-center space-x-1";
-        btnToday.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg text-slate-600 hover:bg-slate-100 transition flex items-center space-x-1";
-        renderGuruHistoryTable();
-      }
-    }
-
     function onDateChange() {
       const dateVal = document.getElementById('attendance-date').value;
       if (!dateVal) return;
@@ -1202,13 +1120,6 @@
       }
       
       saveData();
-      if (currentUser.role === 'KEPSEK') {
-        if (activeView === 'REKAP_BULAN') renderRekapBulananTable();
-        else renderAttendanceTable();
-      } else {
-        renderAttendanceTable();
-        renderGuruHistoryTable();
-      }
     }
 
     function resetAttendance(personId) {
@@ -1219,7 +1130,6 @@
       attendanceRecords[selectedDate][personId].status = 'Reset';
       attendanceRecords[selectedDate][personId].time = '-';
       saveData();
-      renderAttendanceTable();
     }
 
     function removeTeacherFromSchedule(personId) {
@@ -1231,7 +1141,6 @@
       if (confirm(`Apakah Anda yakin ingin mengeluarkan guru ini dari daftar piket hari ${currentDay}?`)) {
         scheduleData[currentDay] = scheduleData[currentDay].filter(p => p.id !== personId);
         saveScheduleData();
-        renderAttendanceTable();
       }
     }
 
@@ -1260,7 +1169,6 @@
       });
 
       saveScheduleData();
-      renderAttendanceTable();
       alert(`Guru "${accounts[username].name}" berhasil ditambahkan ke jadwal hari ${currentDay}!`);
     }
 
@@ -1313,7 +1221,6 @@
         }
 
         saveData();
-        renderRekapBulananTable();
         alert(`Berhasil! Data absensi bulan ${bulanVal} telah direset menjadi 0.`);
       }
     }
@@ -1371,6 +1278,7 @@
 
     function renderAttendanceTable() {
       const tbody = document.getElementById('attendance-body');
+      if (!tbody) return;
       tbody.innerHTML = '';
 
       const searchVal = (document.getElementById('search-attendance').value || '').toLowerCase();
@@ -1394,25 +1302,19 @@
       if (currentUser && currentUser.role === 'KEPSEK') {
         list = scheduleData[currentDay] || [];
       } else if (currentUser) {
+        // Untuk akun Guru/Staf: Hanya tampilkan baris milik individu yang sedang login
         list = [{ id: currentUser.username, role: currentUser.role }];
       }
 
-      let counts = { Hadir: 0, Terlambat: 0, Izin: 0, Sakit: 0, Alpa: 0, Reset: 0 };
+      let counts = { Hadir: 0, Terlambat: 0, Izin: 0, Sakit: 0, Alpa: 0, Reset: 0, 'Belum Diabsen': 0 };
       const dayData = attendanceRecords[selectedDate] || {};
-
-      const selectedDateObj = new Date(selectedDate + "T00:00:00");
-      const isBeforeStart = selectedDateObj < START_ABSENSI_DATE;
 
       let filteredList = list.filter(person => {
         const accInfo = accounts[person.id] || { name: 'Tidak Dikenal', role: person.role };
         const record = dayData[person.id] || {};
         const currentStatus = record.status || '';
         
-        // Sebelum tanggal 20 Oktober 2026, status yang kosong tidak dihitung sebagai Alpa otomatis
-        let effectiveStatus = currentStatus;
-        if (currentStatus === '') {
-          effectiveStatus = isBeforeStart ? 'Reset' : 'Alpa';
-        }
+        let effectiveStatus = (currentStatus === '' || currentStatus === 'Reset') ? 'Belum Diabsen' : currentStatus;
 
         if (counts[effectiveStatus] !== undefined) counts[effectiveStatus]++;
 
@@ -1482,76 +1384,6 @@
       });
     }
 
-    function renderGuruHistoryTable() {
-      const tbody = document.getElementById('guru-history-body');
-      if (!tbody || !currentUser) return;
-      tbody.innerHTML = '';
-
-      const start = document.getElementById('guru-history-start').value;
-      const end = document.getElementById('guru-history-end').value;
-      const statusFilter = document.getElementById('guru-history-status').value;
-
-      if (!start || !end) return;
-
-      let currentDate = new Date(start + "T00:00:00");
-      const endDate = new Date(end + "T00:00:00");
-      let rowsHtml = '';
-      let no = 1;
-
-      const daysMap = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
-
-      while (currentDate <= endDate) {
-        // Hanya tampilkan riwayat jika tanggal >= 20 Oktober 2026
-        if (currentDate >= START_ABSENSI_DATE) {
-          const tglStr = currentDate.toISOString().split('T')[0];
-          const dayIndex = currentDate.getDay();
-          const dayName = daysMap[dayIndex];
-
-          if (dayName !== "MINGGU") {
-            const dayScheduleList = scheduleData[dayName] || [];
-            const hasSchedule = dayScheduleList.some(item => item.id === currentUser.username);
-
-            if (hasSchedule) {
-              const dayData = attendanceRecords[tglStr] || {};
-              const record = dayData[currentUser.username] || { status: '', time: '-', note: '' };
-              const st = record.status === '' ? 'Alpa' : record.status;
-
-              if (statusFilter === 'ALL' || st === statusFilter) {
-                let badgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
-                if (st === 'Hadir') badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                else if (st === 'Terlambat') badgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
-                else if (st === 'Izin') badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
-                else if (st === 'Sakit') badgeClass = 'bg-purple-50 text-purple-700 border-purple-200';
-                else if (st === 'Reset') badgeClass = 'bg-slate-100 text-slate-600 border-slate-300';
-
-                const formattedDate = currentDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-
-                rowsHtml += `
-                  <tr class="hover:bg-slate-50 transition border-b border-slate-100">
-                    <td class="p-3 text-center font-semibold text-slate-500">${no++}</td>
-                    <td class="p-3 font-semibold text-slate-800">${formattedDate}</td>
-                    <td class="p-3 text-slate-600 font-medium">${dayName}</td>
-                    <td class="p-3 text-center">
-                      <span class="px-2.5 py-0.5 rounded-full text-xs font-bold border ${badgeClass}">${st}</span>
-                    </td>
-                    <td class="p-3 text-center font-mono text-xs text-slate-500">${record.time || '-'}</td>
-                    <td class="p-3 text-slate-600 text-xs">${record.note || '-'}</td>
-                  </tr>
-                `;
-              }
-            }
-          }
-        }
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
-
-      if (rowsHtml === '') {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 font-medium">Tidak ada riwayat absensi pada rentang tanggal tersebut.</td></tr>`;
-      } else {
-        tbody.innerHTML = rowsHtml;
-      }
-    }
-
     function renderRekapBulananTable() {
       const tbody = document.getElementById('rekap-bulan-body');
       if (!tbody) return;
@@ -1590,7 +1422,6 @@
         for (let d = 1; d <= maxDayLimit; d++) {
           const dateObj = new Date(year, month, d);
           
-          // Hanya hitung jika tanggal >= 20 Oktober 2026
           if (dateObj >= START_ABSENSI_DATE) {
             const tglStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
             const dayName = daysMap[dateObj.getDay()];
@@ -1601,7 +1432,7 @@
 
               if (hasSchedule) {
                 const rec = attendanceRecords[tglStr] && attendanceRecords[tglStr][username] ? attendanceRecords[tglStr][username] : {};
-                const st = rec.status || 'Alpa';
+                const st = rec.status || '';
 
                 if (st === 'Hadir') cHadir++;
                 else if (st === 'Terlambat') cTerlambat++;
@@ -1737,7 +1568,8 @@
 
             if (hasSchedule) {
               const rec = attendanceRecords[tglStr] && attendanceRecords[tglStr][username] ? attendanceRecords[tglStr][username] : {};
-              const st = rec.status || 'Alpa';
+              const rawSt = rec.status || '';
+              const st = (rawSt === '' || rawSt === 'Reset') ? 'Belum Diabsen' : rawSt;
 
               rows += `
                 <tr class="border-b">
@@ -1778,8 +1610,6 @@
       attendanceRecords[tgl][username].status = newStatus;
       attendanceRecords[tgl][username].time = currentTime;
       saveData();
-      renderRekapBulananTable();
-      alert(`Status tanggal ${tgl} untuk ${username} berhasil diperbarui!`);
     }
 
     function renderAccountsTable() {
@@ -1862,6 +1692,7 @@
         db.ref('absensi_guru').set(attendanceRecords);
       } else {
         localStorage.setItem('absensi_guru', JSON.stringify(attendanceRecords));
+        updateDateAndDay(new Date(selectedDate + "T00:00:00"));
       }
     }
 
@@ -1945,7 +1776,7 @@
 
               if (hasSchedule) {
                 const rec = attendanceRecords[tglStr] && attendanceRecords[tglStr][username] ? attendanceRecords[tglStr][username] : {};
-                const st = rec.status || 'Alpa';
+                const st = rec.status || '';
 
                 if (st === 'Hadir') cHadir++;
                 else if (st === 'Terlambat') cTerlambat++;
