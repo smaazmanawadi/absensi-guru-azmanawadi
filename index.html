@@ -1177,7 +1177,12 @@
       if (!selectEl) return;
       selectEl.innerHTML = '';
 
-      Object.keys(accounts).forEach(username => {
+      // Diurutkan berdasarkan abjad nama untuk dropdown juga
+      const sortedUsernames = Object.keys(accounts).sort((a, b) => {
+        return accounts[a].name.localeCompare(accounts[b].name, 'id');
+      });
+
+      sortedUsernames.forEach(username => {
         const acc = accounts[username];
         const opt = document.createElement('option');
         opt.value = username;
@@ -1302,7 +1307,6 @@
       if (currentUser && currentUser.role === 'KEPSEK') {
         list = scheduleData[currentDay] || [];
       } else if (currentUser) {
-        // Untuk akun Guru/Staf: Hanya tampilkan baris milik individu yang sedang login
         list = [{ id: currentUser.username, role: currentUser.role }];
       }
 
@@ -1407,15 +1411,18 @@
         maxDayLimit = new Date(year, month + 1, 0).getDate();
       }
 
-      let no = 1;
       let rowsHtml = '';
-
       let totalHadir = 0, totalTerlambat = 0, totalIzin = 0, totalSakit = 0, totalAlpa = 0;
       let teacherNames = [];
       let teacherHadirList = [];
       const daysMap = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
 
-      Object.keys(accounts).forEach(username => {
+      // Mengurutkan daftar akun berdasarkan nama lengkap secara abjad (A-Z)
+      const sortedUsernames = Object.keys(accounts).sort((a, b) => {
+        return accounts[a].name.localeCompare(accounts[b].name, 'id');
+      });
+
+      sortedUsernames.forEach((username, index) => {
         const acc = accounts[username];
         let cHadir = 0, cTerlambat = 0, cIzin = 0, cSakit = 0, cAlpa = 0;
 
@@ -1455,7 +1462,7 @@
 
         rowsHtml += `
           <tr class="hover:bg-slate-50 transition border-b border-slate-100">
-            <td class="p-3.5 text-center font-semibold text-slate-500">${no++}</td>
+            <td class="p-3.5 text-center font-semibold text-slate-500">${index + 1}</td>
             <td class="p-3.5 font-bold text-slate-800">${acc.name}<br><span class="text-xs font-normal text-slate-500">${acc.role}</span></td>
             <td class="p-3.5 text-center font-bold text-emerald-600">${cHadir}</td>
             <td class="p-3.5 text-center font-bold text-amber-600">${cTerlambat}</td>
@@ -1759,8 +1766,12 @@
       const daysMap = ["MINGGU", "SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"];
       const dataToExport = [];
 
-      let no = 1;
-      Object.keys(accounts).forEach(username => {
+      // Urutkan abjad juga saat di-export ke Excel
+      const sortedUsernames = Object.keys(accounts).sort((a, b) => {
+        return accounts[a].name.localeCompare(accounts[b].name, 'id');
+      });
+
+      sortedUsernames.forEach((username, index) => {
         const acc = accounts[username];
         let cHadir = 0, cTerlambat = 0, cIzin = 0, cSakit = 0, cAlpa = 0;
 
@@ -1789,7 +1800,7 @@
         }
 
         dataToExport.push({
-          "No": no++,
+          "No": index + 1,
           "Nama Guru/Staf": acc.name,
           "Jabatan": acc.role,
           "Hadir": cHadir,
